@@ -67,8 +67,10 @@ impl ButtonInput {
 pub(crate) struct RawInput {
     /// Mouse position in physical pixels. None if the mouse left the window
     pub(crate) mouse_pos: Option<Vec2>,
-    /// Is the mouse currently down?
-    pub(crate) mouse_down: bool,
+    /// Is the left mouse button currently down?
+    pub(crate) l_mouse_down: bool,
+    /// Is the right mouse button currently down?
+    pub(crate) r_mouse_down: bool,
     /// How much has the mouse scrolled
     pub(crate) scroll: Vec2,
 
@@ -83,7 +85,8 @@ impl RawInput {
     pub(crate) fn new() -> Self {
         Self {
             mouse_pos: None,
-            mouse_down: false,
+            l_mouse_down: false,
+            r_mouse_down: false,
             scroll: Vec2::ZERO,
             keys_pressed: Vec::new(),
             keys_released: Vec::new()
@@ -92,12 +95,75 @@ impl RawInput {
 
 }
 
+/// The state of a mouse button
+#[derive(Clone, Copy)]
+pub struct MouseButton {
+    /// Is the mouse button pressed?
+    pub state: ButtonInput,
+    /// The position of the mouse when this button was first pressed. `None` if the button is not pressed. 
+    pub press_pos: Option<Vec2>,
+    /// Is this mouse button being dragged?
+    pub dragging: ButtonInput
+}
+
+impl MouseButton {
+
+    fn new() -> Self {
+        Self {
+            state: ButtonInput::new(),
+            press_pos: None,
+            dragging: ButtonInput::new(),
+        }
+    }
+
+    fn update(&mut self, down: bool, mouse_pos: Option<Vec2>) {
+        self.state.tick(down);
+        self.dragging.tick_with_same_state();
+        if self.state.pressed() {
+            self.press_pos = mouse_pos;
+        }
+        if self.state.down() {
+            if mouse_pos.unwrap_or(Vec2::INFINITY).distance(self.press_pos.unwrap_or(Vec2::INFINITY)) > 2.5 {
+                self.dragging.press();
+            }
+        }
+        if self.state.released() {
+            self.press_pos = None;
+            self.dragging.release();
+        }
+    }
+
+    pub fn down(&self) -> bool {
+        self.state.down()
+    }
+
+    pub fn pressed(&self) -> bool {
+        self.state.pressed()
+    }
+
+    pub fn released(&self) -> bool {
+        self.state.released()
+    }
+
+    pub fn dragging(&self) -> bool {
+        self.dragging.down()
+    }
+
+    pub fn drag_started(&self) -> bool {
+        self.dragging.pressed()
+    }
+
+    pub fn drag_stopped(&self) -> bool {
+        self.dragging.released()
+    }
+
+}
+
 pub struct Input {
     pub prev_mouse_pos: Option<Vec2>,
     pub mouse_pos: Option<Vec2>,
-    pub l_mouse: ButtonInput,
-    pub l_mouse_press_pos: Option<Vec2>,
-    pub dragging: ButtonInput,
+    pub l_mouse: MouseButton,
+    pub r_mouse: MouseButton,
     pub scroll: Vec2,
 
     keys: HashMap<Key, ButtonInput>,
@@ -108,8 +174,8 @@ pub struct Input {
 /// The memory storing what inputs are provided to a node
 pub(crate) struct Interaction {
     pub(crate) hovered: bool,
-    pub(crate) l_mouse: ButtonInput,
-    pub(crate) dragging: ButtonInput,
+    pub(crate) l_mouse: MouseButton,
+    pub(crate) r_mouse: MouseButton,
     pub(crate) scroll: Vec2
 }
 
@@ -118,8 +184,8 @@ impl Default for Interaction {
     fn default() -> Self {
         Self {
             hovered: false,
-            l_mouse: ButtonInput::new(),
-            dragging: ButtonInput::new(),
+            l_mouse: MouseButton::new(),
+            r_mouse: MouseButton::new(),
             scroll: Vec2::ZERO
         }
     }
@@ -185,9 +251,8 @@ impl Input {
         Self {
             prev_mouse_pos: None,
             mouse_pos: None,
-            l_mouse: ButtonInput::new(),
-            l_mouse_press_pos: None,
-            dragging: ButtonInput::new(),
+            l_mouse: MouseButton::new(),
+            r_mouse: MouseButton::new(),
             scroll: Vec2::ZERO,
             keys: HashMap::new(),
             keys_pressed: Vec::new(),
@@ -200,20 +265,10 @@ impl Input {
     pub(crate) fn update(&mut self, raw_input: &mut RawInput, scale_factor: f32) {
         self.prev_mouse_pos = self.mouse_pos;
         self.mouse_pos = raw_input.mouse_pos.map(|pos| pos / scale_factor);
-        self.l_mouse.tick(raw_input.mouse_down);
-        self.dragging.tick_with_same_state();
-        if self.l_mouse.pressed() {
-            self.l_mouse_press_pos = self.mouse_pos;
-        }
-        if self.l_mouse.down() {
-            if self.mouse_pos.unwrap_or(Vec2::INFINITY).distance(self.l_mouse_press_pos.unwrap_or(Vec2::INFINITY)) > 2.5 {
-                self.dragging.press();
-            }
-        }
-        if self.l_mouse.released() {
-            self.l_mouse_press_pos = None;
-            self.dragging.release();
-        }
+
+        self.l_mouse.update(raw_input.l_mouse_down, self.mouse_pos);
+        self.r_mouse.update(raw_input.r_mouse_down, self.mouse_pos);
+        
         self.scroll = raw_input.scroll / scale_factor;
         raw_input.scroll = Vec2::ZERO;
 
@@ -248,8 +303,8 @@ impl Input {
         for (id, interaction) in memory.iter_mut::<Interaction>() {
             let hovered = Some(id) == hovered_node;
             interaction.hovered = hovered;
-            interaction.l_mouse = if hovered { self.l_mouse } else { ButtonInput::new() };
-            interaction.dragging = if hovered { self.dragging } else { ButtonInput::new() };
+            interaction.l_mouse = if hovered { self.l_mouse } else { MouseButton::new() };
+            interaction.r_mouse = if hovered { self.r_mouse } else { MouseButton::new() };
             interaction.scroll = if hovered { self.scroll } else { Vec2::ZERO };
         }
     }
@@ -262,8 +317,8 @@ pub struct Response {
     pub node_ref: UIRef,
 
     pub hovered: bool,
-    pub l_mouse: ButtonInput,
-    pub dragging: ButtonInput,
+    pub l_mouse: MouseButton,
+    pub r_mouse: MouseButton,
     pub scroll: Vec2
 }
 
@@ -295,20 +350,16 @@ impl Response {
         self.l_mouse.released()
     }
 
-    pub fn mouse_pressed_outside(&self, ui: &mut UI) -> bool {
-        self.mouse_pressed() && !self.contains_mouse(ui)
-    }
-
     pub fn dragging(&self) -> bool {
-        self.dragging.down()
+        self.l_mouse.dragging()
     }
 
     pub fn drag_started(&self) -> bool {
-        self.dragging.pressed()
+        self.l_mouse.drag_started()
     }
 
     pub fn drag_stopped(&self) -> bool {
-        self.dragging.released()
+        self.l_mouse.drag_stopped()
     }
 
     pub fn drag_delta(&self, ui: &mut UI) -> Vec2 {
@@ -317,6 +368,42 @@ impl Response {
         }
         let scale = self.scale(ui);
         ui.input().mouse_delta() / scale
+    }
+
+    pub fn right_mouse_down(&self) -> bool {
+        self.r_mouse.down()
+    }
+
+    pub fn right_mouse_pressed(&self) -> bool {
+        self.r_mouse.pressed()
+    }
+
+    pub fn right_mouse_released(&self) -> bool {
+        self.r_mouse.released()
+    }
+
+    pub fn right_dragging(&self) -> bool {
+        self.r_mouse.dragging()
+    }
+
+    pub fn right_drag_started(&self) -> bool {
+        self.r_mouse.drag_started()
+    }
+
+    pub fn right_drag_stopped(&self) -> bool {
+        self.r_mouse.drag_stopped()
+    }
+
+    pub fn right_drag_delta(&self, ui: &mut UI) -> Vec2 {
+        if !self.right_dragging() {
+            return Vec2::ZERO;
+        }
+        let scale = self.scale(ui);
+        ui.input().mouse_delta() / scale
+    }
+
+    pub fn mouse_pressed_outside(&self, ui: &mut UI) -> bool {
+        (self.mouse_pressed() || self.right_mouse_pressed()) && !self.contains_mouse(ui)
     }
 
     pub fn is_focused(&self, ui: &mut UI) -> bool {

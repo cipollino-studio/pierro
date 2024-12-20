@@ -177,9 +177,15 @@ impl<T: App> ApplicationHandler for AppHandler<'_, T> {
             },
 
             WindowEvent::MouseInput { device_id: _, state, button } => {
-                if button == MouseButton::Left {
-                    self.raw_input.mouse_down = state.is_pressed();
-                } 
+                match button {
+                    MouseButton::Left => {
+                        self.raw_input.l_mouse_down = state.is_pressed();
+                    },
+                    MouseButton::Right => {
+                        self.raw_input.r_mouse_down = state.is_pressed();
+                    },
+                    _ => {}
+                }
             },
             WindowEvent::CursorLeft { device_id: _ } => {
                 self.raw_input.mouse_pos = None;

@@ -298,7 +298,7 @@ impl<'a, 'b> UI<'a, 'b> {
             node_ref: new_node,
             hovered: interaction.hovered,
             l_mouse: interaction.l_mouse,
-            dragging: interaction.dragging,
+            r_mouse: interaction.r_mouse,
             scroll: interaction.scroll
         }
     }

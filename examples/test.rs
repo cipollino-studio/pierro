@@ -17,7 +17,7 @@ impl pierro::App for TestApp {
         let bg_color = ui.style::<pierro::Theme>().bg_dark;
         let bg = ui.node(
             pierro::UINodeParams::new(pierro::Size::fr(1.0), pierro::Size::fr(1.0))
-                .with_layout(pierro::Layout::vertical())
+                .with_layout(pierro::Layout::vertical().with_vertical_overflow())
                 .with_fill(bg_color)
                 .with_transform(pierro::TSTransform::scale(self.zoom))
         );
@@ -32,6 +32,9 @@ impl pierro::App for TestApp {
                 }
                 if pierro::button(ui, "-").mouse_released() {
                     self.zoom /= 1.25;
+                }
+                if pierro::button(ui, "@").right_mouse_released() {
+                    self.n += 100;
                 }
             });
             pierro::v_spacing(ui, 15.0);
@@ -66,13 +69,6 @@ impl pierro::App for TestApp {
 
         });
 
-        ui.layer(|ui| {
-            pierro::v_spacing(ui, 150.0);
-            if pierro::button(ui, "The button!!!").mouse_released() {
-                self.n += 100;
-            }
-        });
-        
     }
 
 }
