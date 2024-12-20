@@ -26,6 +26,7 @@ impl pierro::App for TestApp {
 
             pierro::v_spacing(ui, 15.0);
             pierro::label(ui, "Above the scroll area");
+
             pierro::horizontal(ui, |ui| {
                 if pierro::button(ui, "+").mouse_released() {
                     self.zoom *= 1.25;
@@ -33,9 +34,11 @@ impl pierro::App for TestApp {
                 if pierro::button(ui, "-").mouse_released() {
                     self.zoom /= 1.25;
                 }
-                if pierro::button(ui, "@").right_mouse_released() {
-                    self.n += 100;
-                }
+                
+                let button_response = pierro::button(ui, "@");
+                pierro::context_menu(ui, &button_response, |ui| {
+                    pierro::label(ui, "Truly!!!");
+                });
             });
             pierro::v_spacing(ui, 15.0);
             pierro::text_edit(ui, &mut self.text);

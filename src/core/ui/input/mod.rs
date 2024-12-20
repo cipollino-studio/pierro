@@ -403,7 +403,7 @@ impl Response {
     }
 
     pub fn mouse_pressed_outside(&self, ui: &mut UI) -> bool {
-        (self.mouse_pressed() || self.right_mouse_pressed()) && !self.contains_mouse(ui)
+        (ui.input().l_mouse.pressed() || ui.input().r_mouse.pressed()) && !self.contains_mouse(ui)
     }
 
     pub fn is_focused(&self, ui: &mut UI) -> bool {

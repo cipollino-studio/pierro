@@ -323,9 +323,9 @@ impl<'a, 'b> UI<'a, 'b> {
         body_result
     }
 
-    pub fn layer<R, F: FnOnce(&mut Self) -> R>(&mut self, body: F) -> R {
+    pub fn layer<R, F: FnOnce(&mut Self) -> R>(&mut self, body: F) -> (UIRef, R) {
         let layer = self.tree.add_layer(self.window_size);
-        self.with_parent(layer, body)
+        (layer, self.with_parent(layer, body))
     }
 
     pub fn input(&self) -> &Input {
