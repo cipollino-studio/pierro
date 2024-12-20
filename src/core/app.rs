@@ -6,7 +6,7 @@ use winit::{
     window::WindowId,
 };
 
-use crate::{vec2, Id, Input, Memory, Painter, RawInput, Rect, RenderResources, Size, UINode, UINodeParams, UITree, Vec2, WindowConfig, UI};
+use crate::{vec2, Input, Memory, Painter, RawInput, Rect, RenderResources, UITree, Vec2, WindowConfig, UI};
 
 use super::{Key, LogicalKey, TextRenderCache};
 
@@ -36,14 +36,14 @@ impl<T: App> AppHandler<'_, T> {
         let size = physical_size / scale_factor;
         
         let mut tree = UITree::new();
-        let layer = tree.add_node(UINode::new(Id(0), 0, UINodeParams::new(Size::px(size.x), Size::px(size.y))));
+        let layer = tree.add_layer(size); 
 
         // distribute input
         input.update(raw_input, scale_factor); 
-        input.distribute(tree.get(layer).id, memory);
+        input.distribute(memory);
 
         // ui generation
-        let mut ui = UI::new(input, memory, render_resources, tree, layer);
+        let mut ui = UI::new(input, memory, render_resources, size, tree, layer);
         app.tick(&mut ui);
         let request_redraw = ui.request_redraw; 
         let mut tree = ui.tree();
@@ -54,8 +54,8 @@ impl<T: App> AppHandler<'_, T> {
         memory.garbage_collect(&tree);
 
         // ui layout
-        tree.layout(layer, Rect::min_size(Vec2::ZERO, size), memory, &mut render_resources.text_resources);
-        tree.remember_layout(layer, memory);
+        tree.layout(Rect::min_size(Vec2::ZERO, size), memory, &mut render_resources.text_resources);
+        tree.remember_layout(memory);
 
         // ui rendering
         let Ok(output) = render_resources.surface.get_current_texture() else { return; }; 
@@ -82,7 +82,7 @@ impl<T: App> AppHandler<'_, T> {
             &mut next_text_render_cache
         );
 
-        tree.paint(&mut painter, layer);
+        tree.paint(&mut painter);
 
         painter.finish();
         render_resources.text_render_cache = next_text_render_cache;

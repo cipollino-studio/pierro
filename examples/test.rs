@@ -65,6 +65,13 @@ impl pierro::App for TestApp {
             pierro::v_spacing(ui, 15.0);
 
         });
+
+        ui.layer(|ui| {
+            pierro::v_spacing(ui, 150.0);
+            if pierro::button(ui, "The button!!!").mouse_released() {
+                self.n += 100;
+            }
+        });
         
     }
 

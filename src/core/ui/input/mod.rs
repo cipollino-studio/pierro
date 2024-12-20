@@ -233,8 +233,17 @@ impl Input {
     }
 
     /// Distribute the input to nodes, taking foucs into account.
-    pub(crate) fn distribute(&self, root: Id, memory: &mut Memory) {
-        let hovered_node = memory.get_focus().or_else(|| self.mouse_pos.map(|pos| find_hover_node(memory, root, pos)).flatten());
+    pub(crate) fn distribute(&self, memory: &mut Memory) {
+        let layer_ids = memory.layer_ids.clone();
+        let hovered_node = memory.get_focus().or_else(|| {
+            let mouse_pos = self.mouse_pos?;
+            for layer in layer_ids.iter().rev() { 
+                if let Some(hovered_node) = find_hover_node(memory, *layer, mouse_pos) {
+                    return Some(hovered_node)
+                }
+            }
+            None
+        });
 
         for (id, interaction) in memory.iter_mut::<Interaction>() {
             let hovered = Some(id) == hovered_node;

@@ -5,7 +5,7 @@ use super::{UIRef, UITree};
 
 impl UITree {
 
-    pub(crate) fn paint(&mut self, painter: &mut Painter, node_ref: UIRef) {
+    fn paint_node(&mut self, painter: &mut Painter, node_ref: UIRef) {
 
         let node = self.get_mut(node_ref); 
 
@@ -22,7 +22,7 @@ impl UITree {
 
         let mut child = node.first_child;
         while child.is_some() {
-            self.paint(painter, child);
+            self.paint_node(painter, child);
             child = self.get(child).next;
         }
 
@@ -33,6 +33,12 @@ impl UITree {
 
         painter.pop_clip_rect();
         painter.pop_transform();
+    }
+
+    pub(crate) fn paint(&mut self, painter: &mut Painter) {
+        for layer in self.layers.clone() {
+            self.paint_node(painter, layer);
+        }
     }
 
 }

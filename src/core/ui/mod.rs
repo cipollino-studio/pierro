@@ -174,15 +174,22 @@ impl UINode {
 
 }
 
+/// A tree of UI nodes
 pub(crate) struct UITree {
-    nodes: Vec<UINode>
+    /// All the nodes in the tree
+    nodes: Vec<UINode>,
+    /// The root node of each layer of the UI.
+    /// Layers cover the entire screen and are drawn in order, allowing for popups, context menus, etc.
+    /// Each layer is its own tree of nodes, with the layer node being the root.
+    layers: Vec<UIRef>
 }
 
 impl UITree {
 
     pub(crate) fn new() -> Self {
         Self {
-            nodes: Vec::new()
+            nodes: Vec::new(),
+            layers: Vec::new()
         }
     }
 
@@ -204,6 +211,16 @@ impl UITree {
         self.nodes.push(node); 
         UIRef::Some(self.nodes.len() - 1)
     }
+    
+    pub(crate) fn add_layer(&mut self, size: Vec2) -> UIRef {
+        let layer = self.add_node(UINode::new(
+            Id(0),
+            self.layers.len() as u64,
+            UINodeParams::new(Size::px(size.x), Size::px(size.y)) 
+        ));
+        self.layers.push(layer);
+        layer
+    }
 
 }
 
@@ -213,6 +230,8 @@ pub struct UI<'a, 'b> {
     style: Style,
 
     render_resources: &'a mut RenderResources<'b>,
+
+    window_size: Vec2,
 
     // tree-building
     tree: UITree,
@@ -225,12 +244,13 @@ pub struct UI<'a, 'b> {
 
 impl<'a, 'b> UI<'a, 'b> {
 
-    pub(crate) fn new(input: &'a Input, memory: &'a mut Memory, render_resources: &'a mut RenderResources<'b>, tree: UITree, layer: UIRef) -> Self {
+    pub(crate) fn new(input: &'a Input, memory: &'a mut Memory, render_resources: &'a mut RenderResources<'b>, window_size: Vec2, tree: UITree, layer: UIRef) -> Self {
         Self {
             input,
             memory,
             style: Style::new(),
             render_resources,
+            window_size,
             tree,
             parent_stack: vec![layer],
             curr_sibling: UIRef::Null,
@@ -283,12 +303,12 @@ impl<'a, 'b> UI<'a, 'b> {
         }
     }
 
-    pub fn push_parent(&mut self, parent: UIRef) {
+    pub(crate) fn push_parent(&mut self, parent: UIRef) {
         self.parent_stack.push(parent);
         self.curr_sibling = self.tree.get(parent).last_child;
     }
 
-    pub fn pop_parent(&mut self) {
+    pub(crate) fn pop_parent(&mut self) {
         self.parent_stack.pop();
         if self.parent_stack.is_empty() {
             panic!("ui parent stack underflow!");
@@ -301,6 +321,11 @@ impl<'a, 'b> UI<'a, 'b> {
         let body_result = body(self);
         self.pop_parent();
         body_result
+    }
+
+    pub fn layer<R, F: FnOnce(&mut Self) -> R>(&mut self, body: F) -> R {
+        let layer = self.tree.add_layer(self.window_size);
+        self.with_parent(layer, body)
     }
 
     pub fn input(&self) -> &Input {

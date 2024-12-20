@@ -341,30 +341,33 @@ impl UITree {
         }
     }
 
-    pub(crate) fn layout(&mut self, node: UIRef, space: Rect, memory: &mut Memory, text_resources: &mut TextResources) {
+    pub(crate) fn layout(&mut self, space: Rect, memory: &mut Memory, text_resources: &mut TextResources) {
 
-        // Step 1: calculate down-dependent basis sizes
-        for axis in AXES {
-            self.calc_down_dependent_basis_size(memory, node, axis, text_resources);
+        for layer in self.layers.clone() {
+
+            // Step 1: calculate down-dependent basis sizes
+            for axis in AXES {
+                self.calc_down_dependent_basis_size(memory, layer, axis, text_resources);
+            }
+
+            // Step 2: calculate up-dependent basis sizes
+            for axis in AXES {
+                self.calc_up_dependent_basis_size(layer, axis);
+            }
+
+            // Step 3: calculate layout
+            for axis in AXES {
+                self.calc_layout(layer, self.get(layer).id, space.axis_range(axis), axis, memory);
+            }
+            self.get_mut(layer).rect = space;
+
+            // Step 4: apply transformations
+            self.calc_transformations(layer, memory, TSTransform::IDENTITY);
         }
-
-        // Step 2: calculate up-dependent basis sizes
-        for axis in AXES {
-            self.calc_up_dependent_basis_size(node, axis);
-        }
-
-        // Step 3: calculate layout
-        for axis in AXES {
-            self.calc_layout(node, self.get(node).id, space.axis_range(axis), axis, memory);
-        }
-        self.get_mut(node).rect = space;
-
-        // Step 4: apply transformations
-        self.calc_transformations(node, memory, TSTransform::IDENTITY);
 
     }
 
-    pub(crate) fn remember_layout(&self, node: UIRef, memory: &mut Memory) {
+    fn remember_node_layout(&self, node: UIRef, memory: &mut Memory) {
         let node = self.get(node);
         let layout_mem = memory.get::<LayoutMemory>(node.id);
         layout_mem.rect = node.rect;
@@ -376,8 +379,15 @@ impl UITree {
 
         let mut child = node.first_child;
         while child.is_some() {
-            self.remember_layout(child, memory);
+            self.remember_node_layout(child, memory);
             child = self.get(child).next;
+        }
+    }
+
+    pub(crate) fn remember_layout(&self, memory: &mut Memory) {
+        memory.layer_ids = self.layers.iter().map(|layer| self.get(*layer).id).collect();
+        for layer in &self.layers {
+            self.remember_node_layout(*layer, memory);
         }
     }
 

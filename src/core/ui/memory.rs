@@ -7,6 +7,7 @@ use super::UITree;
 pub struct Id(pub(crate) u64);
 
 pub struct Memory {
+    pub(crate) layer_ids: Vec<Id>,
     focused: Option<Id>,
     memory: HashMap<(Id, TypeId), Box<dyn Any>>
 }
@@ -15,6 +16,7 @@ impl Memory {
 
     pub(crate) fn new() -> Self {
         Self {
+            layer_ids: Vec::new(),
             focused: None,
             memory: HashMap::new(),
         }
