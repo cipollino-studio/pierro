@@ -1,0 +1,13 @@
+[package]
+name = "pierro"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+winit = "0.30.5"
+wgpu = "22.1.0"
+pollster = "0.3.0"
+bytemuck = { version = "1.19.0", features = ["derive"] }
+etagere = "0.2.13"
+cosmic-text = "0.12.1"
+ahash = { version = "0.8.11", features = ["std"], default_features = false }
