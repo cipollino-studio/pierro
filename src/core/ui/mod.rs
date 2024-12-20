@@ -366,7 +366,18 @@ impl<'a, 'b> UI<'a, 'b> {
         self.request_redraw = true;
     }
 
-    pub(crate) fn font_system(&mut self) -> &mut cosmic_text::FontSystem {
+    /// Get the WebGPU render device
+    pub fn wgpu_device(&mut self) -> &wgpu::Device {
+        &self.render_resources.device
+    } 
+
+    /// Get the WebGPU render queue
+    pub fn wgpu_queue(&mut self) -> &wgpu::Queue {
+        &self.render_resources.queue
+    }
+
+    /// Get the COSMIC Text font system
+    pub fn font_system(&mut self) -> &mut cosmic_text::FontSystem {
         &mut self.render_resources.text_resources.font_system
     }
 

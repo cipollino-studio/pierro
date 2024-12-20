@@ -17,3 +17,4 @@ mod ui;
 pub use ui::*;
 
 pub use wgpu;
+pub use cosmic_text;
