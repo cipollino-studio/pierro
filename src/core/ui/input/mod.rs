@@ -105,6 +105,7 @@ pub struct Input {
     pub keys_released: Vec<Key>
 }
 
+/// The memory storing what inputs are provided to a node
 pub(crate) struct Interaction {
     pub(crate) hovered: bool,
     pub(crate) l_mouse: ButtonInput,
@@ -125,6 +126,7 @@ impl Default for Interaction {
 
 }
 
+/// Find the node hovered at a given position in screen space
 fn find_hover_node(memory: &mut Memory, node: Id, pos: Vec2) -> Option<Id> {
     let mut child = memory.get::<LayoutMemory>(node).first_child;
     while let Some(child_id) = child {
@@ -135,38 +137,43 @@ fn find_hover_node(memory: &mut Memory, node: Id, pos: Vec2) -> Option<Id> {
     } 
 
     let layout_mem = memory.get::<LayoutMemory>(node);
-    if layout_mem.rect.contains(pos) && layout_mem.sense_mouse {
+    if layout_mem.screen_rect.contains(pos) && layout_mem.sense_mouse {
         return Some(node);
     }
 
     None
 }
 
-
 impl Input {
 
+    /// The change in mouse position between the previous and current frame
     pub fn mouse_delta(&self) -> Vec2 {
         let Some(mouse_pos) = self.mouse_pos else { return Vec2::ZERO };
         let Some(prev_mouse_pos) = self.prev_mouse_pos else { return Vec2::ZERO };
         mouse_pos - prev_mouse_pos
     }
 
+    /// Get the state of a key
     pub fn key_state(&self, key: Key) -> ButtonInput {
         self.keys.get(&key).map(|state| *state).unwrap_or(ButtonInput::new())
     }
 
+    /// Is a key down?
     pub fn key_down(&self, key: Key) -> bool {
         self.key_state(key).down()
     }
 
+    /// Has a key just been pressed?
     pub fn key_pressed(&self, key: Key) -> bool {
         self.key_state(key).pressed()
     }
 
+    /// Has a key just been released?
     pub fn key_released(&self, key: Key) -> bool {
         self.key_state(key).released()
     }
 
+    /// Get a mutable reference to the state of a key
     fn key_state_mut(&mut self, key: &Key) -> &mut ButtonInput {
         if !self.keys.contains_key(&key) {
             self.keys.insert(key.clone(), ButtonInput::new());
@@ -188,6 +195,8 @@ impl Input {
         }
     }
 
+    /// Update the input given the raw input from the window.
+    /// Resets the raw input in preparation for the next frame.
     pub(crate) fn update(&mut self, raw_input: &mut RawInput, scale_factor: f32) {
         self.prev_mouse_pos = self.mouse_pos;
         self.mouse_pos = raw_input.mouse_pos.map(|pos| pos / scale_factor);
@@ -223,6 +232,7 @@ impl Input {
 
     }
 
+    /// Distribute the input to nodes, taking foucs into account.
     pub(crate) fn distribute(&self, root: Id, memory: &mut Memory) {
         let hovered_node = memory.get_focus().or_else(|| self.mouse_pos.map(|pos| find_hover_node(memory, root, pos)).flatten());
 
@@ -252,14 +262,14 @@ impl Response {
 
     pub fn contains_mouse(&self, ui: &mut UI) -> bool {
         let Some(pos) = ui.input().mouse_pos else { return false; };
-        ui.memory().get::<LayoutMemory>(self.id).rect.contains(pos)
+        ui.memory().get::<LayoutMemory>(self.id).screen_rect.contains(pos)
     }
 
     /// Returns the position of the mouse relative to the node
     pub fn mouse_pos(&self, ui: &mut UI) -> Option<Vec2> {
         let screen_pos = ui.input().mouse_pos?;
         let layout_memory = ui.memory().get::<LayoutMemory>(self.id);
-        let rect = layout_memory.rect;
+        let rect = layout_memory.screen_rect;
         let scale = layout_memory.transform.scale;
         Some((screen_pos - rect.tl()) / scale) 
     }

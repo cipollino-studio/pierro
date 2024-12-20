@@ -6,6 +6,7 @@ use super::Painter;
 impl Painter<'_> {
 
     pub fn push_clip_rect(&mut self, rect: Rect) {
+        let rect = self.curr_transform() * rect;
         let prev_clip = self.curr_clip_rect();
         self.clip_stack.push(rect.intersect(prev_clip));
     }

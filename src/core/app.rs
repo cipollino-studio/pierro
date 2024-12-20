@@ -189,7 +189,9 @@ impl<T: App> ApplicationHandler for AppHandler<'_, T> {
             },
             WindowEvent::MouseWheel { device_id: _, delta, phase: _ } => {
                 match delta {
-                    MouseScrollDelta::LineDelta(x, y) => todo!(),
+                    MouseScrollDelta::LineDelta(x, y) => {
+                        self.raw_input.scroll += vec2(x, y) * 5.0;
+                    },
                     MouseScrollDelta::PixelDelta(physical_position) => {
                         self.raw_input.scroll += vec2(physical_position.x as f32, physical_position.y as f32);
                     },

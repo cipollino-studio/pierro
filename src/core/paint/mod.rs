@@ -2,6 +2,7 @@
 mod window_config;
 
 pub use window_config::*;
+use super::TSTransform;
 
 mod util;
 use util::*;
@@ -16,6 +17,7 @@ mod text;
 pub use text::*;
 
 mod clip;
+mod transform;
 
 use crate::{text::TextResources, Rect, Vec2};
 
@@ -45,6 +47,7 @@ pub struct Painter<'a> {
     dpi_scale: f32,
 
     clip_stack: Vec<Rect>,
+    transform_stack: Vec<TSTransform>,
 
     text_render_cache: &'a mut TextRenderCache,
     next_text_render_cache: &'a mut TextRenderCache
@@ -95,6 +98,7 @@ impl<'a> Painter<'a> {
             dpi_scale,
 
             clip_stack: vec![Rect::min_size(Vec2::ZERO, size)],
+            transform_stack: vec![TSTransform::IDENTITY],
 
             text_render_cache,
             next_text_render_cache

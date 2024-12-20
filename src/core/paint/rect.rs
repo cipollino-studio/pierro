@@ -300,7 +300,8 @@ impl PaintRect {
 
 impl Painter<'_> {
 
-    pub fn rect(&mut self, rect: PaintRect) {
+    pub fn rect(&mut self, mut rect: PaintRect) {
+        rect.rect = self.curr_transform() * rect.rect;
         self.resources.rect.push_rect(
             rect,
             self.curr_clip_rect(), 

@@ -9,6 +9,7 @@ impl UITree {
 
         let node = self.get_mut(node_ref); 
 
+        painter.push_transform(node.transform);
         painter.push_clip_rect(node.rect);
 
         if let Some(color) = node.params.fill {
@@ -31,6 +32,7 @@ impl UITree {
         } 
 
         painter.pop_clip_rect();
+        painter.pop_transform();
     }
 
 }

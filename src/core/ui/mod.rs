@@ -148,6 +148,7 @@ pub(crate) struct UINode {
 
     // layout
     pub(crate) rect: Rect,
+    pub(crate) transform: TSTransform,
     pub(crate) basis_size: Vec2,
     pub(crate) frac_units: Vec2
 }
@@ -165,6 +166,7 @@ impl UINode {
             parent: UIRef::Null,
             params,
             rect: Rect::ZERO,
+            transform: TSTransform::IDENTITY,
             basis_size: Vec2::ZERO,
             frac_units: Vec2::ONE
         }

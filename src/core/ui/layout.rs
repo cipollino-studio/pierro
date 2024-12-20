@@ -325,21 +325,18 @@ impl UITree {
         }
     }
 
-    fn apply_transformations(&mut self, node: UIRef, memory: &mut Memory, transform: TSTransform) {
+    fn calc_transformations(&mut self, node: UIRef, memory: &mut Memory, transform: TSTransform) {
+        
+        self.get_mut(node).transform = transform;
+
         let rect = self.get(node).rect;
         let id = self.get(node).id;
         memory.get::<LayoutInfo>(id).size = rect.size();
-        let rect = transform * rect; 
-        self.get_mut(node).rect = rect;
-        let layout_memory = memory.get::<LayoutMemory>(id);
-        layout_memory.rect = rect; 
-        layout_memory.transform = transform;
-        self.get_mut(node).params.text_style.font_size *= transform.scale;
 
-        let next_transform = self.get(node).params.transform * transform;
+        let next_transform = transform * self.get(node).params.transform;
         let mut child_ref = self.get(node).first_child;
         while child_ref.is_some() {
-            self.apply_transformations(child_ref, memory, next_transform); 
+            self.calc_transformations(child_ref, memory, next_transform); 
             child_ref = self.get(child_ref).next;
         }
     }
@@ -363,7 +360,7 @@ impl UITree {
         self.get_mut(node).rect = space;
 
         // Step 4: apply transformations
-        self.apply_transformations(node, memory, TSTransform::IDENTITY);
+        self.calc_transformations(node, memory, TSTransform::IDENTITY);
 
     }
 
@@ -371,6 +368,8 @@ impl UITree {
         let node = self.get(node);
         let layout_mem = memory.get::<LayoutMemory>(node.id);
         layout_mem.rect = node.rect;
+        layout_mem.screen_rect = node.transform * node.rect;
+        layout_mem.transform = node.transform;
         layout_mem.first_child = node.first_child.as_option().map(|child| self.get(child).id);
         layout_mem.next = node.next.as_option().map(|next| self.get(next).id);
         layout_mem.sense_mouse = node.params.mouse;
@@ -385,7 +384,11 @@ impl UITree {
 }
 
 pub(crate) struct LayoutMemory {
+    /// The node's rectangle without transformations applied
     pub(crate) rect: Rect,
+    /// The node's rectangle with transformations applied
+    pub(crate) screen_rect: Rect,
+    /// The full transformation applied to the node
     pub(crate) transform: TSTransform,
     pub(crate) first_child: Option<Id>,
     pub(crate) next: Option<Id>,
@@ -398,6 +401,7 @@ impl Default for LayoutMemory {
     fn default() -> Self {
         Self {
             rect: Rect::ZERO,
+            screen_rect: Rect::ZERO,
             transform: TSTransform::IDENTITY,
             first_child: None,
             next: None,

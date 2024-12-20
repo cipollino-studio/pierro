@@ -112,7 +112,7 @@ impl Painter<'_> {
     pub fn text(&mut self, text: PaintText) {
 
         let clip_rect = self.curr_clip_rect();
-        if text.rect.intersect(Rect::min_size(clip_rect.tl(), clip_rect.size())).area() < 0.01 {
+        if (self.curr_transform() * text.rect).intersect(clip_rect).area() < 0.01 {
             return;
         }
 
