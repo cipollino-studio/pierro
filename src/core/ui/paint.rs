@@ -17,7 +17,8 @@ impl UITree {
         }
 
         if let Some(text) = node.params.text.take() {
-            painter.text(PaintText::new(text, node.params.text_style, node.rect));
+            let text_rect = node.params.margin.apply(node.rect);
+            painter.text(PaintText::new(text, node.params.text_style, text_rect));
         }
 
         let mut child = node.first_child;

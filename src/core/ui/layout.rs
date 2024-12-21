@@ -95,6 +95,63 @@ impl Layout {
 
 }
 
+#[derive(Clone, Copy)]
+pub struct Margin {
+    /// The margin at the minimum corner of the rectange (left, top)
+    min: Vec2,
+    /// The margin at the maximum corner of the rectangle (right, bottom)
+    max: Vec2 
+}
+
+impl Margin {
+
+    pub const fn new(left: f32, top: f32, right: f32, bottom: f32) -> Self {
+        Self {
+            min: vec2(left, top),
+            max: vec2(right, bottom)
+        }
+    }
+
+    pub const fn same(margin: f32) -> Self {
+        Self::new(margin, margin, margin, margin)
+    }
+
+    pub const fn horizontal(margin: f32) -> Self {
+        Self::new(margin, 0.0, margin, 0.0)
+    }
+
+    pub const fn vertical(margin: f32) -> Self {
+        Self::new(0.0, margin, 0.0, margin)
+    }
+
+    pub const ZERO: Self = Self::same(0.0);
+
+    pub fn total(&self) -> Vec2 {
+        self.min + self.max
+    }
+
+    pub fn on_axis(&self, axis: Axis) -> (f32, f32) {
+        (self.min.on_axis(axis), self.max.on_axis(axis))
+    }
+
+    pub fn apply_on_axis(&self, space: Range, axis: Axis) -> Range {
+        let (margin_min, margin_max) = self.on_axis(axis);
+        if space.size() > margin_min + margin_max {
+            Range::new(space.min + margin_min, space.max - margin_max)
+        } else {
+            Range::point(space.center())
+        }
+    }
+
+    pub fn apply(&self, rect: Rect) -> Rect {
+        Rect::from_ranges(
+            self.apply_on_axis(rect.x_range(), Axis::X),
+            self.apply_on_axis(rect.y_range(), Axis::Y) 
+        )
+    }
+
+}
+
 impl UITree {
 
     fn count_child_fractional_units(&self, node: UIRef, axis: Axis) -> f32 {
@@ -197,11 +254,20 @@ impl UITree {
             SizeKind::Fit => self.calc_content_basis_size(node, frac_units, axis),
         };
 
-        *self.get_mut(node).basis_size.on_axis_mut(axis) = basis_size;
+        let margin = self.get(node).params.margin.total().on_axis(axis);
+        *self.get_mut(node).basis_size.on_axis_mut(axis) = basis_size + margin;
         *self.get_mut(node).frac_units.on_axis_mut(axis) = frac_units;
     }
 
     fn calc_up_dependent_basis_size(&mut self, node: UIRef, axis: Axis) {
+    
+        // Subtract the margins from the node's basis size.
+        // This is done because the margins should not be factored
+        // in to the size of the fractional unit for this node.
+        let margin = self.get(node).params.margin.total().on_axis(axis);
+        *self.get_mut(node).basis_size.on_axis_mut(axis) -= margin;
+
+        // If the node is using a fractional size, set the node's basis size to that fraction of the parent
         let parent = self.get(node).parent;
         if parent.is_some() {
             if let SizeKind::Fr(frac) = self.get(node).params.size.on_axis(axis).size {
@@ -212,6 +278,8 @@ impl UITree {
             }
         }
 
+        // Calculate the space taken up by the node's non-fractional children.
+        // This is necessary to calculate how much space must be given to fractional children
         let mut non_frac_size = 0.0;
         let mut child_ref = self.get(node).first_child;
         while child_ref.is_some() {
@@ -222,6 +290,7 @@ impl UITree {
             child_ref = child.next;
         }
 
+        // If the node's size is not determined by the children(ie, if it's not SizeKind::Fit), calculate how many fractional units fit in the node
         if axis == self.get(node).params.layout.axis && !matches!(self.get(node).params.size.on_axis(axis).size, SizeKind::Fit) {
             let basis_size = self.get(node).basis_size.on_axis(axis);
             let frac_units = self.get(node).frac_units.on_axis(axis);
@@ -230,29 +299,40 @@ impl UITree {
             *self.get_mut(node).frac_units.on_axis_mut(axis) = basis_size / frac_size.max(0.00001); 
         }
 
+        // Calculate the final basis sizes for all the children
         let mut child = self.get(node).first_child;
         while child.is_some() {
             self.calc_up_dependent_basis_size(child, axis);
             child = self.get(child).next;
         }
+
+        // Add the margins back to the basis size
+        *self.get_mut(node).basis_size.on_axis_mut(axis) += margin;
     }
 
-    fn calc_layout_main_axis(&mut self, node: UIRef, node_id: Id, space: Range, axis: Axis, memory: &mut Memory) {
+    fn calc_layout_main_axis(&mut self, node: UIRef, node_id: Id, total_space: Range, axis: Axis, memory: &mut Memory) {
 
         let layout = self.get(node).params.layout;
+        let space = self.get(node).params.margin.apply_on_axis(total_space, axis);
 
+        // The total basis size of all the children 
         let mut total_size = 0.0;
+        // How many parts will the size violation be divided in?
         let mut violation_denominator = 0.0;
+        // How many parts will the size underfill be divided in?
         let mut underfill_denominator = 0.0;
 
         let mut child_ref = self.get(node).first_child;
         while child_ref.is_some() {
             let child = self.get(child_ref);
             let size = child.basis_size.on_axis(axis);
-            total_size += size; 
+            total_size += size;
+
+            // If the child is allowed to shrink, it will share the violation
             if child.params.size.on_axis(axis).shrink {
                 violation_denominator += size;
             }
+
             underfill_denominator += child.params.size.on_axis(axis).grow;
             child_ref = child.next;
         }
@@ -285,8 +365,10 @@ impl UITree {
 
     }
     
-    fn calc_layout_cross_axis(&mut self, node: UIRef, node_id: Id, space: Range, axis: Axis, memory: &mut Memory) {
+    fn calc_layout_cross_axis(&mut self, node: UIRef, node_id: Id, total_space: Range, axis: Axis, memory: &mut Memory) {
+
         let layout = self.get(node).params.layout;
+        let space = self.get(node).params.margin.apply_on_axis(total_space, axis);
 
         let mut child_base_size: f32 = 0.0;
         

@@ -1,23 +1,22 @@
 
-use crate::{Response, Size, UINodeParams, UI};
+use crate::{Margin, Response, Size, UINodeParams, UI};
 
-use super::{animate, margin, Theme};
+use super::{animate, label_text_style, Theme};
 
 pub fn button<S: Into<String>>(ui: &mut UI, label: S) -> Response {
     let theme = ui.style::<Theme>();
     let bg = theme.bg_button;
-    let widget_margin = theme.widget_margin; 
+    let margin = theme.widget_margin;
+    let text_style = label_text_style(ui);
 
-    let response = margin(
-        ui,
-        widget_margin,
-        UINodeParams::new(Size::fit(), Size::fit())
+    let response = ui.node(
+        UINodeParams::new(Size::text(), Size::text())
             .with_fill(bg)
-            .sense_mouse(),
-        |ui| {
-            super::label(ui, label);
-        }
-    ).0;
+            .with_margin(Margin::same(margin))
+            .with_text(label)
+            .with_text_style(text_style)
+            .sense_mouse()
+    );
 
     let theme = ui.style::<Theme>();
     let target_color = if response.mouse_down() {

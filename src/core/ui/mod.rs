@@ -55,6 +55,7 @@ pub struct UINodeParams {
     // Layout
     pub(crate) size: PerAxis<Size>,
     pub(crate) layout: Layout,
+    pub(crate) margin: Margin,
     pub(crate) transform: TSTransform,
 
     // Styling
@@ -80,6 +81,7 @@ impl UINodeParams {
         Self {
             size: PerAxis::new(w, h),
             layout: Layout::new(Axis::Y),
+            margin: Margin::ZERO,
             transform: TSTransform::IDENTITY,
             fill: None,
             text: None,
@@ -98,6 +100,11 @@ impl UINodeParams {
 
     pub fn with_layout(mut self, layout: Layout) -> Self {
         self.layout = layout;
+        self
+    }
+
+    pub fn with_margin(mut self, margin: Margin) -> Self {
+        self.margin = margin;
         self
     }
 
