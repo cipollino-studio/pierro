@@ -10,7 +10,6 @@ impl UITree {
         let node = self.get_mut(node_ref); 
 
         painter.push_transform(node.transform);
-        painter.push_clip_rect(node.rect);
 
         if let Some(color) = node.params.fill {
             painter.rect(PaintRect::new(node.rect, color));
@@ -20,6 +19,8 @@ impl UITree {
             let text_rect = node.params.margin.apply(node.rect);
             painter.text(PaintText::new(text, node.params.text_style, text_rect));
         }
+
+        painter.push_clip_rect(node.rect);
 
         let mut child = node.first_child;
         while child.is_some() {
