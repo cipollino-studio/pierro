@@ -17,7 +17,7 @@ mod paint;
 
 use crate::{Axis, Color, PerAxis, Rect, Vec2};
 
-use super::{Painter, RenderResources, TSTransform, TextStyle};
+use super::{Painter, RenderResources, Stroke, TSTransform, TextStyle};
 
 #[derive(Clone, Copy, PartialEq, Eq)]
 pub enum UIRef {
@@ -61,6 +61,7 @@ pub struct UINodeParams {
     // Styling
     pub(crate) fill: Color,
     pub(crate) rounding: f32,
+    pub(crate) stroke: Stroke,
 
     // Text
     pub(crate) text: Option<String>,
@@ -86,6 +87,7 @@ impl UINodeParams {
             transform: TSTransform::IDENTITY,
             fill: Color::TRANSPARENT,
             rounding: 0.0,
+            stroke: Stroke::NONE,
             text: None,
             text_style: TextStyle::default(),
             id_source: None,
@@ -122,6 +124,11 @@ impl UINodeParams {
 
     pub fn with_rounding(mut self, rounding: f32) -> Self {
         self.rounding = rounding;
+        self
+    }
+
+    pub fn with_stroke(mut self, stroke: Stroke) -> Self {
+        self.stroke = stroke;
         self
     }
 

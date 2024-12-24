@@ -3,7 +3,7 @@ use wgpu::util::DeviceExt;
 
 use crate::{Color, Rect, Vec2};
 
-use super::{Painter, Texture};
+use super::{Painter, Stroke, Texture};
 
 #[repr(C)]
 #[derive(Clone, Copy, bytemuck::Zeroable, bytemuck::Pod)]
@@ -22,7 +22,9 @@ struct RectData {
     tex_idx: u32,
     clip_min: [f32; 2],
     clip_max: [f32; 2],
-    rounding: f32
+    rounding: f32,
+    stroke_color: [f32; 4],
+    stroke_width: f32
 }
 
 impl RectData { 
@@ -36,7 +38,9 @@ impl RectData {
         5 => Uint32,
         6 => Float32x2,
         7 => Float32x2,
-        8 => Float32
+        8 => Float32,
+        9 => Float32x4,
+        10 => Float32
     ];
     
     fn desc() -> wgpu::VertexBufferLayout<'static> {
@@ -223,7 +227,9 @@ impl RectResources {
             tex_idx: rect.texture.map(|tex| self.get_texture_idx(tex, device, queue, render_pass) + 1).unwrap_or(0),
             clip_min: clip_rect.tl().into(), 
             clip_max: clip_rect.br().into(), 
-            rounding: rect.rounding.min(rect.rect.size().min_axis() / 2.0)
+            rounding: rect.rounding.min(rect.rect.size().min_axis() / 2.0),
+            stroke_color: rect.stroke.color.into(),
+            stroke_width: rect.stroke.width
         };
         if self.rect_batch.len() == MAX_RECTS_IN_BATCH - 1 {
             self.flush_buffer(device, queue, render_pass);
@@ -314,7 +320,8 @@ pub struct PaintRect {
     texture: Option<Texture>,
     uv_min: Vec2,
     uv_max: Vec2,
-    rounding: f32
+    rounding: f32,
+    stroke: Stroke
 }
 
 impl PaintRect {
@@ -326,7 +333,8 @@ impl PaintRect {
             texture: None,
             uv_min: Vec2::ZERO,
             uv_max: Vec2::ONE,
-            rounding: 0.0
+            rounding: 0.0,
+            stroke: Stroke::NONE
         }
     }
     
@@ -343,6 +351,11 @@ impl PaintRect {
 
     pub fn with_rounding(mut self, rounding: f32) -> Self {
         self.rounding = rounding;
+        self
+    }
+
+    pub fn with_stroke(mut self, stroke: Stroke) -> Self {
+        self.stroke = stroke;
         self
     }
 

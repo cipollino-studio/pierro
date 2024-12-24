@@ -1,27 +1,31 @@
 
 struct VertexOutput {
     @builtin(position) clip_pos: vec4<f32>,
-    @location(0) color: vec4<f32>,
-    @location(1) uv: vec2<f32>,
-    @location(2) tex: u32,
-    @location(3) pos: vec2<f32>,
-    @location(4) clip_min: vec2<f32>,
-    @location(5) clip_max: vec2<f32>,
-    @location(6) rect_center: vec2<f32>,
-    @location(7) rect_half_size: vec2<f32>,
-    @location(8) rounding: f32
+    @location(0)  color: vec4<f32>,
+    @location(1)  uv: vec2<f32>,
+    @location(2)  tex: u32,
+    @location(3)  pos: vec2<f32>,
+    @location(4)  clip_min: vec2<f32>,
+    @location(5)  clip_max: vec2<f32>,
+    @location(6)  rect_center: vec2<f32>,
+    @location(7)  rect_half_size: vec2<f32>,
+    @location(8)  rounding: f32,
+    @location(9)  stroke_color: vec4<f32>,
+    @location(10) stroke_width: f32
 };
 
 struct RectData {
-    @location(0) min: vec2<f32>,
-    @location(1) size: vec2<f32>,
-    @location(2) uv_min: vec2<f32>,
-    @location(3) uv_size: vec2<f32>,
-    @location(4) color: vec4<f32>,
-    @location(5) tex: u32,
-    @location(6) clip_min: vec2<f32>,
-    @location(7) clip_max: vec2<f32>,
-    @location(8) rounding: f32
+    @location(0)  min: vec2<f32>,
+    @location(1)  size: vec2<f32>,
+    @location(2)  uv_min: vec2<f32>,
+    @location(3)  uv_size: vec2<f32>,
+    @location(4)  color: vec4<f32>,
+    @location(5)  tex: u32,
+    @location(6)  clip_min: vec2<f32>,
+    @location(7)  clip_max: vec2<f32>,
+    @location(8)  rounding: f32,
+    @location(9)  stroke_color: vec4<f32>,
+    @location(10) stroke_width: f32
 }
 
 struct Uniforms {
@@ -59,6 +63,8 @@ fn vs_main(
     out.rect_center = rect.min + rect.size * 0.5;
     out.rect_half_size = rect.size * 0.5;
     out.rounding = rect.rounding;
+    out.stroke_color = rect.stroke_color;
+    out.stroke_width = rect.stroke_width;
     return out;
 }
 
@@ -129,7 +135,17 @@ fn fs_main(in: VertexOutput) -> @location(0) vec4<f32> {
         discard;         
     }
     
-    let sdf = rounded_rect_sdf(in.pos, in.rect_center, in.rect_half_size, in.rounding);
+    let outer_sdf = rounded_rect_sdf(in.pos, in.rect_center, in.rect_half_size, in.rounding);
+    let rounding_factor = vec4(1.0, 1.0, 1.0, 1.0 - smoothstep(0.0, 1.0, outer_sdf));
+
+    var color = in.color;
+    if in.stroke_width > 0.0 {
+        let inner_half_size = in.rect_half_size - vec2(in.stroke_width, in.stroke_width);
+        let inner_rounding = max(in.rounding - 2.0 * in.stroke_width, 0.0);
+        let inner_sdf = rounded_rect_sdf(in.pos, in.rect_center, inner_half_size, inner_rounding);
+        let stroke_fac = smoothstep(-0.5, 0.5, inner_sdf);
+        color = mix(color, in.stroke_color, stroke_fac);
+    }
     
-    return in.color * sample(in.uv, in.tex) * vec4(1.0, 1.0, 1.0, 1.0 - smoothstep(0.0, 1.0, sdf));
+    return color * sample(in.uv, in.tex) * rounding_factor;
 }

@@ -7,6 +7,9 @@ use super::TSTransform;
 mod texture;
 pub use texture::*;
 
+mod stroke;
+pub use stroke::*;
+
 mod rect;
 pub use rect::*;
 
