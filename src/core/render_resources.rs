@@ -7,7 +7,7 @@ use winit::{
 
 use crate::{text::TextResources, PainterResources, WindowConfig};
 
-use super::TextRenderCache;
+use super::{TextRenderCache, Vec2};
 
 pub(crate) struct RenderResources<'a> {
     pub(crate) window: Arc<Window>,
@@ -86,6 +86,10 @@ impl RenderResources<'_> {
             text_resources,
             text_render_cache
         })
+    }
+
+    pub(crate) fn begin_frame(&mut self, screen_size: Vec2) {
+        self.paint_resources.begin_frame(&self.queue, screen_size);
     }
 
     pub(crate) fn resize(&mut self, new_size: PhysicalSize<u32>) {

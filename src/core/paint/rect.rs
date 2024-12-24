@@ -1,7 +1,15 @@
 
+use wgpu::util::DeviceExt;
+
 use crate::{Color, Rect, Vec2};
 
-use super::{map_screen_space_rect_to_clip_space, Painter, Texture};
+use super::{Painter, Texture};
+
+#[repr(C)]
+#[derive(Clone, Copy, bytemuck::Zeroable, bytemuck::Pod)]
+struct Uniforms {
+    screen_size: [f32; 2]
+}
 
 #[repr(C)]
 #[derive(Clone, Copy, bytemuck::Zeroable, bytemuck::Pod)]
@@ -14,6 +22,7 @@ struct RectData {
     tex_idx: u32,
     clip_min: [f32; 2],
     clip_max: [f32; 2],
+    rounding: f32
 }
 
 impl RectData { 
@@ -26,7 +35,8 @@ impl RectData {
         4 => Float32x4,
         5 => Uint32,
         6 => Float32x2,
-        7 => Float32x4,
+        7 => Float32x2,
+        8 => Float32
     ];
     
     fn desc() -> wgpu::VertexBufferLayout<'static> {
@@ -44,6 +54,7 @@ pub(super) struct RectResources {
     buffers: Vec<wgpu::Buffer>,
     curr_buffer: usize,
     bind_group_layout: wgpu::BindGroupLayout,
+    uniform_buffer: wgpu::Buffer,
 
     rect_batch: Vec<RectData>,
     textures: Vec<Texture>,
@@ -57,7 +68,7 @@ const MAX_TEXTURES_IN_BATCH: usize = 8;
 
 impl RectResources {
 
-    pub fn new(device: &wgpu::Device, surface_format: wgpu::TextureFormat) -> Self {
+    pub(crate) fn new(device: &wgpu::Device, surface_format: wgpu::TextureFormat) -> Self {
 
         let shader = device.create_shader_module(wgpu::include_wgsl!("rect.wgsl"));
 
@@ -66,12 +77,22 @@ impl RectResources {
                 binding: 0,
                 visibility: wgpu::ShaderStages::FRAGMENT,
                 ty: wgpu::BindingType::Sampler(wgpu::SamplerBindingType::Filtering),
-                count:None 
+                count: None 
+            },
+            wgpu::BindGroupLayoutEntry {
+                binding: 1,
+                visibility: wgpu::ShaderStages::VERTEX_FRAGMENT,
+                ty: wgpu::BindingType::Buffer {
+                    ty: wgpu::BufferBindingType::Uniform,
+                    has_dynamic_offset: false,
+                    min_binding_size: None 
+                },
+                count: None
             }
         ];
         for i in 0..(MAX_TEXTURES_IN_BATCH as u32) {
             layout_entries.push(wgpu::BindGroupLayoutEntry {
-                binding: i + 1,
+                binding: i + 2,
                 visibility: wgpu::ShaderStages::FRAGMENT,
                 ty: wgpu::BindingType::Texture {
                     sample_type: wgpu::TextureSampleType::Float { filterable: true },
@@ -149,11 +170,20 @@ impl RectResources {
         let filler_texture_view = filler_texture.create_view(&wgpu::TextureViewDescriptor::default());
         let filler_texture = Texture::new(filler_texture, filler_texture_view);
 
+        let uniform_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+            label: Some("pierro_rect_uniform_buffer"),
+            contents: bytemuck::cast_slice(&[Uniforms {
+                screen_size: [600.0, 400.0],
+            }]),
+            usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
+        });
+
         Self {
             pipeline,
             buffers: Vec::new(),
             curr_buffer: 0,
             bind_group_layout,
+            uniform_buffer,
 
             rect_batch,
             textures,
@@ -177,18 +207,23 @@ impl RectResources {
         (self.textures.len() - 1) as u32
     }
 
-    fn push_rect(&mut self, rect: PaintRect, clip_rect: Rect, win_size: Vec2, device: &wgpu::Device, queue: &wgpu::Queue, render_pass: &mut wgpu::RenderPass) {
-        let clip_space_rect = map_screen_space_rect_to_clip_space(rect.rect, win_size);
-        let clip_space_clip_rect = map_screen_space_rect_to_clip_space(clip_rect, win_size);
+    pub(super) fn begin_frame(&mut self, queue: &wgpu::Queue, logical_size: Vec2) {
+        queue.write_buffer(&self.uniform_buffer, 0, bytemuck::cast_slice(&[Uniforms {
+            screen_size: [logical_size.x, logical_size.y],
+        }]));
+    }
+
+    fn push_rect(&mut self, rect: PaintRect, clip_rect: Rect, device: &wgpu::Device, queue: &wgpu::Queue, render_pass: &mut wgpu::RenderPass) {
         let data = RectData {
-            min: clip_space_rect.tl().into(),
-            size: clip_space_rect.size().into(),
+            min: rect.rect.tl().into(),
+            size: rect.rect.size().into(),
             uv_min: rect.uv_min.into(),
             uv_size: (rect.uv_max - rect.uv_min).into(),
             color: rect.fill.into(),
             tex_idx: rect.texture.map(|tex| self.get_texture_idx(tex, device, queue, render_pass) + 1).unwrap_or(0),
-            clip_min: clip_space_clip_rect.tl().into(), 
-            clip_max: clip_space_clip_rect.br().into(), 
+            clip_min: clip_rect.tl().into(), 
+            clip_max: clip_rect.br().into(), 
+            rounding: rect.rounding.min(rect.rect.size().min_axis() / 2.0)
         };
         if self.rect_batch.len() == MAX_RECTS_IN_BATCH - 1 {
             self.flush_buffer(device, queue, render_pass);
@@ -223,6 +258,14 @@ impl RectResources {
             wgpu::BindGroupEntry {
                 binding: 0,
                 resource: wgpu::BindingResource::Sampler(&sampler) 
+            },
+            wgpu::BindGroupEntry {
+                binding: 1,
+                resource: wgpu::BindingResource::Buffer(wgpu::BufferBinding {
+                    buffer: &self.uniform_buffer,
+                    offset: 0,
+                    size: None
+                }) 
             }
         ];
         if self.textures.is_empty() { // make sure there is *some* texture to bind
@@ -231,7 +274,7 @@ impl RectResources {
         for i in 0..MAX_TEXTURES_IN_BATCH {
             let texture = &self.textures[i % self.textures.len()];
             bind_group_entries.push(wgpu::BindGroupEntry {
-                binding: (i + 1) as u32, 
+                binding: (i + 2) as u32, 
                 resource: wgpu::BindingResource::TextureView(texture.texture_view()),
             });
         }
@@ -270,7 +313,8 @@ pub struct PaintRect {
     fill: Color,
     texture: Option<Texture>,
     uv_min: Vec2,
-    uv_max: Vec2
+    uv_max: Vec2,
+    rounding: f32
 }
 
 impl PaintRect {
@@ -281,7 +325,8 @@ impl PaintRect {
             fill,
             texture: None,
             uv_min: Vec2::ZERO,
-            uv_max: Vec2::ONE
+            uv_max: Vec2::ONE,
+            rounding: 0.0
         }
     }
     
@@ -296,6 +341,11 @@ impl PaintRect {
         self
     }
 
+    pub fn with_rounding(mut self, rounding: f32) -> Self {
+        self.rounding = rounding;
+        self
+    }
+
 }
 
 impl Painter<'_> {
@@ -305,7 +355,6 @@ impl Painter<'_> {
         self.resources.rect.push_rect(
             rect,
             self.curr_clip_rect(), 
-            self.size,
             self.device,
             self.queue,
             &mut self.render_pass,

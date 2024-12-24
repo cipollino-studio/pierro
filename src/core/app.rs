@@ -60,6 +60,7 @@ impl<T: App> AppHandler<'_, T> {
         // ui rendering
         let Ok(output) = render_resources.surface.get_current_texture() else { return; }; 
         let view = output.texture.create_view(&wgpu::TextureViewDescriptor::default());
+        render_resources.begin_frame(size);
 
         let mut encoder = render_resources.device.create_command_encoder(&wgpu::CommandEncoderDescriptor {
             label: Some("pierro_command_encoder"),

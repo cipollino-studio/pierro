@@ -59,7 +59,8 @@ pub struct UINodeParams {
     pub(crate) transform: TSTransform,
 
     // Styling
-    pub(crate) fill: Option<Color>,
+    pub(crate) fill: Color,
+    pub(crate) rounding: f32,
 
     // Text
     pub(crate) text: Option<String>,
@@ -83,7 +84,8 @@ impl UINodeParams {
             layout: Layout::new(Axis::Y),
             margin: Margin::ZERO,
             transform: TSTransform::IDENTITY,
-            fill: None,
+            fill: Color::TRANSPARENT,
+            rounding: 0.0,
             text: None,
             text_style: TextStyle::default(),
             id_source: None,
@@ -114,7 +116,12 @@ impl UINodeParams {
     }
 
     pub fn with_fill(mut self, color: Color) -> Self {
-        self.fill = Some(color);
+        self.fill = color;
+        self
+    }
+
+    pub fn with_rounding(mut self, rounding: f32) -> Self {
+        self.rounding = rounding;
         self
     }
 
@@ -354,7 +361,7 @@ impl<'a, 'b> UI<'a, 'b> {
     }
 
     pub fn set_fill(&mut self, node: UIRef, fill: Color) {
-        self.tree.get_mut(node).params.fill = Some(fill);
+        self.tree.get_mut(node).params.fill = fill;
     }
 
     pub fn set_transform(&mut self, node: UIRef, transform: TSTransform) {

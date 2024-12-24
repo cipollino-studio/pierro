@@ -4,9 +4,6 @@ mod window_config;
 pub use window_config::*;
 use super::TSTransform;
 
-mod util;
-use util::*;
-
 mod texture;
 pub use texture::*;
 
@@ -34,6 +31,10 @@ impl PainterResources {
         }
     }
 
+    pub(super) fn begin_frame(&mut self, queue: &wgpu::Queue, screen_size: Vec2) {
+        self.rect.begin_frame(queue, screen_size);
+    }
+
 }
 
 pub struct Painter<'a> {
@@ -43,7 +44,6 @@ pub struct Painter<'a> {
     resources: &'a mut PainterResources,
     text_resources: &'a mut TextResources,
 
-    size: Vec2,
     dpi_scale: f32,
 
     clip_stack: Vec<Rect>,
@@ -94,7 +94,6 @@ impl<'a> Painter<'a> {
             resources,
             text_resources,
 
-            size,
             dpi_scale,
 
             clip_stack: vec![Rect::min_size(Vec2::ZERO, size)],

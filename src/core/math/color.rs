@@ -39,6 +39,7 @@ impl Color {
         }
     }
 
+    pub const TRANSPARENT: Self = Self::rgba(0.0, 0.0, 0.0, 0.0);
     pub const BLACK: Self = Self::rgb(0.0, 0.0, 0.0);
     pub const WHITE: Self = Self::rgb(1.0, 1.0, 1.0);
     pub const RED: Self = Self::rgb(1.0, 0.0, 0.0);

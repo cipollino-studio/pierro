@@ -16,6 +16,7 @@ pub fn text_edit(ui: &mut UI, text: &mut String) {
     let theme = ui.style::<Theme>();
     let color = theme.bg_text_field;
     let widget_margin = theme.widget_margin;
+    let widget_rounding = theme.widget_rounding;
     let font_size = theme.label_font_size;
     let font_color = theme.text;
 
@@ -25,6 +26,7 @@ pub fn text_edit(ui: &mut UI, text: &mut String) {
         UINodeParams::new(Size::px(size), Size::px(font_size + 2.0 * widget_margin))
             .sense_mouse()
             .with_fill(color)
+            .with_rounding(widget_rounding)
     );
 
     if text_edit.mouse_pressed() && !text_edit.is_focused(ui) {

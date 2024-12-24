@@ -69,6 +69,14 @@ impl Vec2 {
         vec2(self.x.max(other.x), self.y.max(other.y))
     }
 
+    pub fn min_axis(&self) -> f32 {
+        self.x.min(self.y)
+    }
+
+    pub fn max_axis(&self) -> f32 {
+        self.x.max(self.y)
+    }
+
 }
 
 impl Add<Vec2> for Vec2 {

@@ -11,8 +11,8 @@ impl UITree {
 
         painter.push_transform(node.transform);
 
-        if let Some(color) = node.params.fill {
-            painter.rect(PaintRect::new(node.rect, color));
+        if node.params.fill.a > 0.0 {
+            painter.rect(PaintRect::new(node.rect, node.params.fill).with_rounding(node.params.rounding));
         }
 
         if let Some(text) = node.params.text.take() {

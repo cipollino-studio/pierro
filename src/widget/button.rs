@@ -7,6 +7,7 @@ pub fn button<S: Into<String>>(ui: &mut UI, label: S) -> Response {
     let theme = ui.style::<Theme>();
     let bg = theme.bg_button;
     let margin = theme.widget_margin;
+    let rounding = theme.widget_rounding;
     let text_style = label_text_style(ui);
 
     let response = ui.node(
@@ -15,6 +16,7 @@ pub fn button<S: Into<String>>(ui: &mut UI, label: S) -> Response {
             .with_margin(Margin::same(margin))
             .with_text(label)
             .with_text_style(text_style)
+            .with_rounding(rounding)
             .sense_mouse()
     );
 

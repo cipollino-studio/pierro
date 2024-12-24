@@ -19,6 +19,7 @@ pub struct Theme {
     pub label_font_size: f32,
 
     pub widget_margin: f32,
+    pub widget_rounding: f32,
 
     pub color_transition_animation_rate: f32
 }
@@ -43,6 +44,7 @@ impl Default for Theme {
             label_font_size: 14.0,
 
             widget_margin: 5.0,
+            widget_rounding: 5.0,
 
             color_transition_animation_rate: 0.1
         }
