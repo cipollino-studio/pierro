@@ -365,6 +365,8 @@ impl Painter<'_> {
 
     pub fn rect(&mut self, mut rect: PaintRect) {
         rect.rect = self.curr_transform() * rect.rect;
+        rect.rounding *= self.curr_transform().scale;
+        rect.stroke.width *= self.curr_transform().scale;
         self.resources.rect.push_rect(
             rect,
             self.curr_clip_rect(), 
