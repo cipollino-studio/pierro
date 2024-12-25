@@ -344,9 +344,23 @@ impl<'a, 'b> UI<'a, 'b> {
         body_result
     }
 
+    pub fn with_node<R, F: FnOnce(&mut UI) -> R>(&mut self, params: UINodeParams, body: F) -> (Response, R) {
+        let resp = self.node(params);
+        (resp, self.with_parent(resp.node_ref, body))
+    }
+
     pub fn layer<R, F: FnOnce(&mut Self) -> R>(&mut self, body: F) -> (UIRef, R) {
         let layer = self.tree.add_layer(self.window_size);
         (layer, self.with_parent(layer, body))
+    }
+
+    pub fn get_parent_ref(&self, node: UIRef) -> UIRef {
+        self.tree.get(node).parent
+    } 
+
+    pub fn get_parent_id(&self, node: UIRef) -> Id {
+        let parent_ref = self.get_parent_ref(node);
+        self.tree.get(parent_ref).id
     }
 
     pub fn input(&self) -> &Input {

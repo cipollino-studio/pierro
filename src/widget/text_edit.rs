@@ -94,7 +94,7 @@ pub fn text_edit(ui: &mut UI, text: &mut String) {
 
         // Update scroll
         let cursor_pos = memory.editor.cursor_position();
-        let text_edit_width = ui.memory().get::<LayoutInfo>(text_edit.id).size.x;
+        let text_edit_width = ui.memory().get::<LayoutInfo>(text_edit.id).rect.size().x;
         if let Some((cursor_x, _)) = cursor_pos {
             memory.scroll = memory.scroll.max(cursor_x as f32 - text_edit_width + 10.0);
             memory.scroll = memory.scroll.min(cursor_x as f32);

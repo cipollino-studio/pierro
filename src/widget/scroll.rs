@@ -27,8 +27,8 @@ fn handle_scroll_bar_dragging(ui: &mut UI, axis: Axis, thumb: Response, bar_id: 
     let rate = theme.color_transition_animation_rate;
 
     let target_color = if thumb.dragging() {
-        let thumb_size = ui.memory().get::<LayoutInfo>(thumb.id).size.on_axis(axis);
-        let bar_size = ui.memory().get::<LayoutInfo>(bar_id).size.on_axis(axis);
+        let thumb_size = ui.memory().get::<LayoutInfo>(thumb.id).rect.size().on_axis(axis);
+        let bar_size = ui.memory().get::<LayoutInfo>(bar_id).rect.size().on_axis(axis);
         let drag_scale = max_scroll.on_axis(axis) / (bar_size - thumb_size); 
 
         let memory = ui.memory().get::<ScrollAreaMemory>(scroll_area_id);
@@ -75,7 +75,7 @@ pub fn scroll_area<F: FnOnce(&mut UI)>(ui: &mut UI, contents: F) {
             ui.with_parent(content_response.node_ref, contents);
 
             let layout_info = ui.memory().get::<LayoutInfo>(content_response.id);
-            let max_scroll = (layout_info.child_base_size - layout_info.size).max(Vec2::ZERO);
+            let max_scroll = (layout_info.children_base_size - layout_info.rect.size()).max(Vec2::ZERO);
 
             let memory = ui.memory().get::<ScrollAreaMemory>(scroll_area.id);
             memory.scroll -= scroll_area.scroll;

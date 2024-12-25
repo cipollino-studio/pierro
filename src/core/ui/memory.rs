@@ -1,9 +1,9 @@
 
-use std::{any::{Any, TypeId}, collections::HashMap};
+use std::{any::{Any, TypeId}, collections::HashMap, u64};
 
 use super::UITree;
 
-#[derive(Clone, Copy, Hash, PartialEq, Eq)]
+#[derive(Clone, Copy, Hash, PartialEq, Eq, Debug)]
 pub struct Id(pub(crate) u64);
 
 pub struct Memory {
@@ -72,7 +72,7 @@ impl Memory {
     }
 
     /// Does a node have data of a certain type in memory?
-    pub fn has<T: Default + Any>(&self, id: Id) -> bool {
+    pub fn has<T: Any>(&self, id: Id) -> bool {
         let key = (id, TypeId::of::<T>());
         self.memory.contains_key(&key)
     }

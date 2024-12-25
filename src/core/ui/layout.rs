@@ -152,6 +152,8 @@ impl Margin {
 
 }
 
+const TINY: f32 = 0.000000000000001;
+
 impl UITree {
 
     fn count_child_fractional_units(&self, node: UIRef, axis: Axis) -> f32 {
@@ -210,7 +212,7 @@ impl UITree {
         size.on_axis(axis)
     }
 
-    fn calc_content_basis_size(&mut self, node: UIRef, frac_units: f32, axis: Axis) -> f32 {
+    fn calc_content_basis_size(&mut self, node: UIRef, axis: Axis) -> f32 {
         let layout_axis = self.get(node).params.layout.axis; 
 
         if axis == layout_axis {
@@ -223,7 +225,7 @@ impl UITree {
                 child_ref = self.get(child_ref).next;
             }
 
-            content_size * frac_units
+            content_size
         } else {
             let mut content_size: f32 = 0.0;
 
@@ -234,7 +236,7 @@ impl UITree {
                 child_ref = child.next;
             }
 
-            content_size * frac_units
+            content_size
         }
     }
 
@@ -250,8 +252,7 @@ impl UITree {
         let basis_size = match size {
             SizeKind::Px(size) => size,
             SizeKind::Text => self.calc_text_size(memory, node, axis, text_resources),
-            SizeKind::Fr(_) => 0.0, // We'll calculate the actual size in the up dependent basis pass 
-            SizeKind::Fit => self.calc_content_basis_size(node, frac_units, axis),
+            SizeKind::Fr(_) | SizeKind::Fit => self.calc_content_basis_size(node, axis),
         };
 
         let margin = self.get(node).params.margin.total().on_axis(axis);
@@ -294,9 +295,9 @@ impl UITree {
         if axis == self.get(node).params.layout.axis && !matches!(self.get(node).params.size.on_axis(axis).size, SizeKind::Fit) {
             let basis_size = self.get(node).basis_size.on_axis(axis);
             let frac_units = self.get(node).frac_units.on_axis(axis);
-            let space_left = (basis_size - non_frac_size).max(0.0);
-            let frac_size = space_left / frac_units.max(0.00001);
-            *self.get_mut(node).frac_units.on_axis_mut(axis) = basis_size / frac_size.max(0.00001); 
+            let space_left = (basis_size - non_frac_size - margin).max(0.0);
+            let frac_size = space_left / frac_units.max(TINY);
+            *self.get_mut(node).frac_units.on_axis_mut(axis) = basis_size / frac_size.max(TINY); 
         }
 
         // Calculate the final basis sizes for all the children
@@ -337,7 +338,7 @@ impl UITree {
             child_ref = child.next;
         }
 
-        *memory.get::<LayoutInfo>(node_id).child_base_size.on_axis_mut(axis) = total_size;
+        *memory.get::<LayoutInfo>(node_id).children_base_size.on_axis_mut(axis) = total_size;
 
         let violation = if *layout.allow_overflow.on_axis(axis) { 0.0 } else { (total_size - space.size()).max(0.0) }; 
         let violation_denominator_inv = if violation_denominator < 0.00001 { 1.0 } else { 1.0 / violation_denominator };
@@ -396,7 +397,7 @@ impl UITree {
             child_ref = self.get(child_ref).next;
         }
 
-        *memory.get::<LayoutInfo>(node_id).child_base_size.on_axis_mut(axis) = child_base_size;
+        *memory.get::<LayoutInfo>(node_id).children_base_size.on_axis_mut(axis) = child_base_size;
     }
 
     fn calc_layout(&mut self, node: UIRef, node_id: Id, space: Range, axis: Axis, memory: &mut Memory) {
@@ -413,7 +414,8 @@ impl UITree {
 
         let rect = self.get(node).rect;
         let id = self.get(node).id;
-        memory.get::<LayoutInfo>(id).size = rect.size();
+        memory.get::<LayoutInfo>(id).rect = rect;
+        memory.get::<LayoutInfo>(id).screen_rect = transform * rect;
 
         let next_transform = transform * self.get(node).params.transform;
         let mut child_ref = self.get(node).first_child;
@@ -504,16 +506,18 @@ impl Default for LayoutMemory {
 }
 
 pub struct LayoutInfo {
-    pub size: Vec2,
-    pub child_base_size: Vec2
+    pub rect: Rect,
+    pub screen_rect: Rect,
+    pub children_base_size: Vec2
 }
 
 impl Default for LayoutInfo {
 
     fn default() -> Self {
         Self {
-            size: Vec2::ZERO,
-            child_base_size: Vec2::ZERO
+            rect: Rect::ZERO,
+            screen_rect: Rect::ZERO,
+            children_base_size: Vec2::ZERO
         }
     }
 

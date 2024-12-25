@@ -24,6 +24,34 @@ impl pierro::App for TestApp {
         
         ui.with_parent(bg.node_ref, |ui| {
 
+            pierro::menu_bar(ui, |ui| {
+                pierro::menu_bar_item(ui, "File", |ui| {
+                    if pierro::menu_button(ui, "New").mouse_released() {
+                        println!("New!!");
+                    }
+                    if pierro::menu_button(ui, "Open").mouse_released() {
+                        println!("Open!!");
+                    }
+                    pierro::menu_category(ui, "Recent", |ui| {
+                        pierro::menu_button(ui, "A.txt");
+                        pierro::menu_button(ui, "B.txt");
+                        pierro::menu_button(ui, "C.txt");
+                        pierro::menu_category(ui, "!!", |ui| {
+                            pierro::menu_button(ui, "A.txt");
+                            pierro::menu_button(ui, "B.txt");
+                            pierro::menu_button(ui, "C.txt");
+                        });
+                    });
+                    pierro::h_line(ui);
+                    pierro::menu_button(ui, "XYZ").mouse_released();
+                    pierro::menu_button(ui, "PQR").mouse_released();
+                });
+                pierro::menu_bar_item(ui, "Edit", |ui| {
+                    pierro::menu_button(ui, "Undo").mouse_released();
+                    pierro::menu_button(ui, "Redo").mouse_released();
+                });
+            });
+
             pierro::v_spacing(ui, 15.0);
             pierro::label(ui, "Above the scroll area");
 

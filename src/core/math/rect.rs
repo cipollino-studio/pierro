@@ -54,6 +54,22 @@ impl Rect {
     pub const fn br(&self) -> Vec2 {
         self.max
     }
+    
+    pub const fn left(&self) -> f32 {
+        self.min.x
+    }
+
+    pub const fn right(&self) -> f32 {
+        self.max.x
+    }
+
+    pub const fn top(&self) -> f32 {
+        self.min.y
+    }
+
+    pub const fn bottom(&self) -> f32 {
+        self.max.y
+    }
 
     pub fn size(&self) -> Vec2 {
         self.max - self.min
