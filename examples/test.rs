@@ -55,6 +55,18 @@ impl pierro::App for TestApp {
             pierro::v_spacing(ui, 15.0);
             pierro::label(ui, "Above the scroll area");
 
+            pierro::dnd_source(ui, "Hello".to_string(), |ui| {
+                pierro::label(ui, "Drag me! (Hello)");
+            });
+            pierro::dnd_source(ui, "World".to_string(), |ui| {
+                pierro::label(ui, "Drag me! (World)");
+            });
+            if let Some(message) = pierro::dnd_drop_zone::<String, _>(ui, |ui| {
+                pierro::label(ui, "Drop here...");
+            }) {
+                println!("{}", message);
+            }
+
             pierro::horizontal(ui, |ui| {
                 if pierro::button(ui, "+").mouse_released() {
                     self.zoom *= 1.25;

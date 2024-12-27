@@ -174,6 +174,7 @@ pub struct Input {
 /// The memory storing what inputs are provided to a node
 pub(crate) struct Interaction {
     pub(crate) hovered: bool,
+    pub(crate) through_hovered: bool,
     pub(crate) l_mouse: MouseButton,
     pub(crate) r_mouse: MouseButton,
     pub(crate) scroll: Vec2
@@ -184,6 +185,7 @@ impl Default for Interaction {
     fn default() -> Self {
         Self {
             hovered: false,
+            through_hovered: false,
             l_mouse: MouseButton::new(),
             r_mouse: MouseButton::new(),
             scroll: Vec2::ZERO
@@ -193,17 +195,17 @@ impl Default for Interaction {
 }
 
 /// Find the node hovered at a given position in screen space
-fn find_hover_node(memory: &mut Memory, node: Id, pos: Vec2) -> Option<Id> {
+fn find_hover_node(memory: &mut Memory, node: Id, pos: Vec2, ignore: Option<Id>) -> Option<Id> {
     let mut child = memory.get::<LayoutMemory>(node).first_child;
     while let Some(child_id) = child {
-        if let Some(node) = find_hover_node(memory, child_id, pos) {
+        if let Some(node) = find_hover_node(memory, child_id, pos, ignore) {
             return Some(node);
         }
         child = memory.get::<LayoutMemory>(child_id).next;
     } 
 
     let layout_mem = memory.get::<LayoutMemory>(node);
-    if layout_mem.screen_rect.contains(pos) && layout_mem.sense_mouse {
+    if layout_mem.screen_rect.contains(pos) && layout_mem.sense_mouse && Some(node) != ignore {
         return Some(node);
     }
 
@@ -293,19 +295,33 @@ impl Input {
         let hovered_node = memory.get_focus().or_else(|| {
             let mouse_pos = self.mouse_pos?;
             for layer in layer_ids.iter().rev() { 
-                if let Some(hovered_node) = find_hover_node(memory, *layer, mouse_pos) {
+                if let Some(hovered_node) = find_hover_node(memory, *layer, mouse_pos, None) {
                     return Some(hovered_node)
                 }
             }
             None
         });
+        let through_hovered_node = self.mouse_pos.map(|mouse_pos| {
+            for layer in layer_ids.iter().rev() { 
+                if let Some(hovered_node) = find_hover_node(memory, *layer, mouse_pos, memory.get_focus()) {
+                    return Some(hovered_node)
+                }
+            }
+            None
+        }).flatten();
 
         for (id, interaction) in memory.iter_mut::<Interaction>() {
             let hovered = Some(id) == hovered_node;
             interaction.hovered = hovered;
+            interaction.through_hovered = Some(id) == through_hovered_node;
             interaction.l_mouse = if hovered { self.l_mouse } else { MouseButton::new() };
             interaction.r_mouse = if hovered { self.r_mouse } else { MouseButton::new() };
             interaction.scroll = if hovered { self.scroll } else { Vec2::ZERO };
+        }
+
+        // If we're not holding the mouse down, we can't be drag and dropping anything
+        if !self.l_mouse.down() && !self.l_mouse.released() {
+            memory.clear_dnd_payload();
         }
     }
 
@@ -317,6 +333,8 @@ pub struct Response {
     pub node_ref: UIRef,
 
     pub hovered: bool,
+    /// Is this node being hovered through the currently focused node?
+    pub through_hovered: bool,
     pub l_mouse: MouseButton,
     pub r_mouse: MouseButton,
     pub scroll: Vec2

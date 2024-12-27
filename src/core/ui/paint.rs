@@ -20,7 +20,9 @@ impl UITree {
             painter.text(PaintText::new(text, node.params.text_style, text_rect));
         }
 
-        painter.push_clip_rect(node.rect);
+        if node.params.clip {
+            painter.push_clip_rect(node.rect);
+        }
 
         let mut child = node.first_child;
         while child.is_some() {
@@ -33,7 +35,9 @@ impl UITree {
             on_paint(painter, node.rect);
         } 
 
-        painter.pop_clip_rect();
+        if node.params.clip {
+            painter.pop_clip_rect();
+        }
         painter.pop_transform();
     }
 

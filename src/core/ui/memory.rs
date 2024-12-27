@@ -9,6 +9,7 @@ pub struct Id(pub(crate) u64);
 pub struct Memory {
     pub(crate) layer_ids: Vec<Id>,
     focused: Option<Id>,
+    dnd_payload: Option<Box<dyn Any>>,
     memory: HashMap<(Id, TypeId), Box<dyn Any>>
 }
 
@@ -18,6 +19,7 @@ impl Memory {
         Self {
             layer_ids: Vec::new(),
             focused: None,
+            dnd_payload: None,
             memory: HashMap::new(),
         }
     }
@@ -41,6 +43,30 @@ impl Memory {
     /// Returns `None` if no node is focused
     pub fn get_focus(&self) -> Option<Id> {
         self.focused
+    }
+
+    pub fn set_dnd_payload<T: Any>(&mut self, payload: T) {
+        self.dnd_payload = Some(Box::new(payload)); 
+    }
+
+    pub fn has_dnd_payload_of_type<T: Any>(&self) -> bool {
+        match &self.dnd_payload {
+            Some(payload) => {
+                (&**payload).type_id() == TypeId::of::<T>()
+            },
+            None => false,
+        } 
+    }
+
+    pub fn take_dnd_payload<T: Any>(&mut self) -> Option<T> {
+        if !self.has_dnd_payload_of_type::<T>() {
+            return None;
+        }
+        Some(*self.dnd_payload.take().unwrap().downcast().unwrap())
+    }
+
+    pub fn clear_dnd_payload(&mut self) {
+        self.dnd_payload = None;
     }
 
     /// Get a reference to the data of type `T` for a certain node.
