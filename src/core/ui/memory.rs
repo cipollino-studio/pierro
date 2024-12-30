@@ -121,6 +121,12 @@ impl Memory {
         }
 
         self.memory.retain(|(id, _), _| live_nodes.contains(id));
+
+        if let Some(focused) = self.focused {
+            if !live_nodes.contains(&focused) {
+                self.focused = None;
+            }
+        }
     }
 
 }

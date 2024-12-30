@@ -264,7 +264,8 @@ impl Input {
 
     /// Update the input given the raw input from the window.
     /// Resets the raw input in preparation for the next frame.
-    pub(crate) fn update(&mut self, raw_input: &mut RawInput, scale_factor: f32) {
+    /// Returns true if an additional redraw should be requested.
+    pub(crate) fn update(&mut self, raw_input: &mut RawInput, scale_factor: f32) -> bool {
         self.prev_mouse_pos = self.mouse_pos;
         self.mouse_pos = raw_input.mouse_pos.map(|pos| pos / scale_factor);
 
@@ -286,6 +287,8 @@ impl Input {
         for (_key, state) in self.keys.iter_mut() {
             state.tick_with_same_state();
         }
+
+        self.l_mouse.released() || self.r_mouse.released() || !self.keys_released.is_empty()
 
     }
 

@@ -69,12 +69,28 @@ impl Vec2 {
         vec2(self.x.max(other.x), self.y.max(other.y))
     }
 
-    pub fn min_axis(&self) -> f32 {
+    pub fn abs(&self) -> Self {
+        vec2(self.x.abs(), self.y.abs())
+    }
+
+    pub fn min_component(&self) -> f32 {
         self.x.min(self.y)
     }
 
-    pub fn max_axis(&self) -> f32 {
+    pub fn max_component(&self) -> f32 {
         self.x.max(self.y)
+    }
+
+    pub fn min_axis(&self) -> Axis {
+        if self.x < self.y {
+            Axis::X
+        } else {
+            Axis::Y
+        }
+    }
+
+    pub fn max_axis(&self) -> Axis {
+        self.min_axis().other()
     }
 
 }

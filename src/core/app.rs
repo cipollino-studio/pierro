@@ -39,7 +39,9 @@ impl<T: App> AppHandler<'_, T> {
         let layer = tree.add_layer(size); 
 
         // distribute input
-        input.update(raw_input, scale_factor); 
+        if input.update(raw_input, scale_factor) {
+            render_resources.request_redraw();
+        }
         input.distribute(memory);
 
         // ui generation

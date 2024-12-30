@@ -1,5 +1,8 @@
 
+use core::f32;
 use std::fmt::Display;
+
+use crate::Animatable;
 
 use super::{vec2, Axis, Range, Vec2};
 
@@ -39,6 +42,8 @@ impl Rect {
         }
     }
 
+    pub const ZERO: Self = Self::min_max(Vec2::ZERO, Vec2::ZERO);
+
     pub const fn tl(&self) -> Vec2 {
         self.min
     }
@@ -69,6 +74,10 @@ impl Rect {
 
     pub const fn bottom(&self) -> f32 {
         self.max.y
+    }
+
+    pub fn center(&self) -> Vec2 {
+        (self.min + self.max) * 0.5
     }
 
     pub fn size(&self) -> Vec2 {
@@ -136,7 +145,37 @@ impl Rect {
         self.width() * self.height()
     }
 
-    pub const ZERO: Self = Self::min_max(Vec2::ZERO, Vec2::ZERO);
+    pub fn left_frac(&self, frac: f32) -> Rect {
+        Self::min_max(self.tl(), self.bl().lerp(self.br(), frac))
+    }
+    
+    pub fn right_frac(&self, frac: f32) -> Rect {
+        Self::min_max(self.tl().lerp(self.tr(), frac), self.br())
+    }
+
+    pub fn top_frac(&self, frac: f32) -> Rect {
+        Self::min_max(self.tl(), self.tr().lerp(self.br(), frac))
+    }
+
+    pub fn bottom_frac(&self, frac: f32) -> Rect {
+        Self::min_max(self.bl().lerp(self.tl(), frac), self.br())
+    }
+
+    pub fn left_half(&self) -> Rect {
+        self.left_frac(0.5)
+    }
+
+    pub fn right_half(&self) -> Rect {
+        self.right_frac(0.5)
+    }
+
+    pub fn top_half(&self) -> Rect {
+        self.top_frac(0.5)
+    }
+
+    pub fn bottom_half(&self) -> Rect {
+        self.bottom_frac(0.5)
+    }
 
 }
 

@@ -227,7 +227,7 @@ impl RectResources {
             tex_idx: rect.texture.map(|tex| self.get_texture_idx(tex, device, queue, render_pass) + 1).unwrap_or(0),
             clip_min: clip_rect.tl().into(), 
             clip_max: clip_rect.br().into(), 
-            rounding: rect.rounding.min(rect.rect.size().min_axis() / 2.0),
+            rounding: rect.rounding.min(rect.rect.size().min_component() / 2.0),
             stroke_color: rect.stroke.color.into(),
             stroke_width: rect.stroke.width
         };

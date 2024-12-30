@@ -34,3 +34,6 @@ pub use menu::*;
 
 mod dnd;
 pub use dnd::*;
+
+mod docking;
+pub use docking::*;

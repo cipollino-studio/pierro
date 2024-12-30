@@ -83,6 +83,10 @@ impl UINodeParams {
             on_paint: None
         }
     }
+    
+    pub fn new_per_axis(size: PerAxis<Size>) -> Self {
+        Self::new(size.x, size.y)
+    }
 
     pub fn with_size(mut self, w: Size, h: Size) -> Self {
         self.size.x = w;

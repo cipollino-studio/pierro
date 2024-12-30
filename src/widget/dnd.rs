@@ -1,7 +1,7 @@
 
 use std::any::Any;
 
-use crate::{LayoutInfo, Size, Stroke, TSTransform, UINodeParams, Vec2, UI};
+use crate::{LayoutInfo, Response, Size, Stroke, TSTransform, UINodeParams, Vec2, UI};
 
 use super::Theme;
 
@@ -10,7 +10,7 @@ struct DndSourceMemory {
     size: Vec2
 }
 
-pub fn dnd_source<T: Any, F: FnOnce(&mut UI)>(ui: &mut UI, payload: T, body: F) {
+pub fn dnd_source<T: Any, F: FnOnce(&mut UI)>(ui: &mut UI, payload: T, body: F) -> Response {
     let response = ui.node(
         UINodeParams::new(Size::fit(), Size::fit())
             .sense_mouse()
@@ -46,11 +46,12 @@ pub fn dnd_source<T: Any, F: FnOnce(&mut UI)>(ui: &mut UI, payload: T, body: F) 
         ui.with_parent(response.node_ref, body);
     }
     
+    response
 }
 
-pub fn dnd_drop_zone<T: Any, F: FnOnce(&mut UI)>(ui: &mut UI, body: F) -> Option<T> {
+pub fn dnd_drop_zone_with_size<T: Any, F: FnOnce(&mut UI)>(ui: &mut UI, width: Size, height: Size, body: F) -> (Response, Option<T>) {
     let (response, _) = ui.with_node(
-        UINodeParams::new(Size::fit(), Size::fit())
+        UINodeParams::new(width, height)
             .sense_mouse(),
         body
     );
@@ -60,10 +61,14 @@ pub fn dnd_drop_zone<T: Any, F: FnOnce(&mut UI)>(ui: &mut UI, body: F) -> Option
         ui.set_stroke(response.node_ref, Stroke::new(stroke_color, 2.0));
     }
 
-    if response.through_hovered && ui.input().l_mouse.released() {
+    (response, if response.through_hovered && ui.input().l_mouse.released() {
         ui.request_redraw();
         ui.memory().take_dnd_payload() 
     } else {
         None
-    }
+    })
+}
+
+pub fn dnd_drop_zone<T: Any, F: FnOnce(&mut UI)>(ui: &mut UI, body: F) -> (Response, Option<T>) {
+    dnd_drop_zone_with_size(ui, Size::fit(), Size::fit(), body)
 }

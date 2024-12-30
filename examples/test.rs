@@ -63,7 +63,7 @@ impl pierro::App for TestApp {
             });
             if let Some(message) = pierro::dnd_drop_zone::<String, _>(ui, |ui| {
                 pierro::label(ui, "Drop here...");
-            }) {
+            }).1 {
                 println!("{}", message);
             }
 

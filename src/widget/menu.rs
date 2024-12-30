@@ -15,8 +15,8 @@ pub fn menu_bar<F: FnOnce(&mut UI)>(ui: &mut UI, contents: F) {
         UINodeParams::new(Size::fr(1.0), Size::fit())
             .with_fill(fill),
         |ui| {
-        horizontal(ui, contents);
-        h_line(ui);
+            horizontal(ui, contents);
+            h_line(ui);
     });
 }
 

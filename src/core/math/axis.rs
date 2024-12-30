@@ -33,6 +33,13 @@ impl<T> PerAxis<T> {
         }
     }
 
+    pub const fn along_across(axis: Axis, along: T, across: T) -> Self {
+        match axis {
+            Axis::X => Self::new(along, across),
+            Axis::Y => Self::new(across, along)
+        }
+    }
+
     pub fn splat(val: T) -> Self where T: Clone {
         Self {
             x: val.clone(),
