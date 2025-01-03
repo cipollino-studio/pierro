@@ -1,5 +1,5 @@
 
-use crate::{context_menu, dnd_drop_zone_with_size, dnd_source, h_draggable_line, h_spacing, label, label_text_style, menu_bar, v_draggable_line, v_line, v_spacing, Axis, Color, Layout, LayoutInfo, Margin, PaintRect, PerAxis, Size, Stroke, Theme, UINodeParams, UI};
+use crate::{context_menu, dnd_drop_zone_with_size, dnd_source, h_draggable_line, h_spacing, icon_text_style, label, menu_bar, v_draggable_line, v_line, v_spacing, Axis, Color, Layout, LayoutInfo, Margin, PaintRect, PerAxis, Size, Stroke, Theme, UINodeParams, UI};
 
 use super::{command::{DockingCommand, TabDragSource}, DockingNodeId, DockingNodeKind, DockingState, DockingTab, DockingTree, Tabs};
 
@@ -10,7 +10,7 @@ impl<Tab: DockingTab> Tabs<Tab> {
         let theme = ui.style::<Theme>();
         let window_bg = theme.bg_light;
         let margin = theme.widget_margin;
-        let label_style = label_text_style(ui);
+        let icon_style = icon_text_style(ui);
 
         let response = dnd_source(ui, TabDragSource { node_id, tab_idx }, |ui| {
             ui.with_node(
@@ -24,9 +24,9 @@ impl<Tab: DockingTab> Tabs<Tab> {
 
                     let close_button = ui.node(
                         UINodeParams::new(Size::text(), Size::text())
-                            .with_text("X")
+                            .with_text("\u{E4F6}")
                             .sense_mouse()
-                            .with_text_style(label_style)
+                            .with_text_style(icon_style)
                     );
                     if close_button.mouse_released() {
                         commands.push(DockingCommand::CloseTab { tab: TabDragSource { node_id, tab_idx } });

@@ -3,21 +3,23 @@ use std::collections::HashMap;
 
 use cosmic_text::SubpixelBin;
 
-use crate::{vec2, Color, Rect, Vec2};
+use crate::{text::FontId, vec2, Color, Rect, Vec2};
 
 use super::{PaintRect, Painter, Texture};
 
 #[derive(Clone, Copy)]
 pub struct TextStyle {
+    pub font: FontId,
     pub color: Color,
     pub font_size: f32,
-    pub line_height: f32
+    pub line_height: f32,
 }
 
 impl Default for TextStyle {
 
     fn default() -> Self {
         Self {
+            font: FontId::default(),
             color: Color::BLACK,
             font_size: 16.0,
             line_height: 1.0
@@ -116,7 +118,8 @@ impl Painter<'_> {
             return;
         }
 
-        let mut font_system = &mut self.text_resources.font_system;
+        let Some(font) = &mut self.text_resources.fonts.get_mut(&text.style.font) else { return; };
+        let mut font_system = &mut font.font_system;
         let font_size = text.style.font_size * self.dpi_scale;
         let line_height = font_size * text.style.line_height;
         let width = size_to_bounds(text.rect.width() * self.dpi_scale);
@@ -152,7 +155,7 @@ impl Painter<'_> {
                 let mut physical_glyph = glyph.physical((0.0, 0.0), 1.0);
                 physical_glyph.cache_key.x_bin = SubpixelBin::Zero;
                 physical_glyph.cache_key.y_bin = SubpixelBin::Zero;
-                if let Some(glyph_info) = self.text_resources.get_glyph(physical_glyph.cache_key, self.device, self.queue) {
+                if let Some(glyph_info) = self.text_resources.get_glyph(text.style.font, physical_glyph.cache_key, self.device, self.queue) {
                     let pos = (vec2(physical_glyph.x as f32, physical_glyph.y as f32 + run.line_y) + glyph_info.data.pos) / self.dpi_scale;
                     let size = glyph_info.data.size / self.dpi_scale;
                     let texture = glyph_info.texture.clone();

@@ -75,6 +75,7 @@ pub fn label_text_style(ui: &mut UI) -> TextStyle {
     TextStyle {
         color: theme.text,
         font_size: theme.label_font_size,
-        line_height: 1.0
+        line_height: 1.0,
+        font: ui.text_font(),
     }
 }

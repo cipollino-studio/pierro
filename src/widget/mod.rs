@@ -17,6 +17,9 @@ pub use lines::*;
 mod label;
 pub use label::*;
 
+mod icon;
+pub use icon::*;
+
 mod button;
 pub use button::*;
 

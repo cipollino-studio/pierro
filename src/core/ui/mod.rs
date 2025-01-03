@@ -20,7 +20,7 @@ pub use tree::*;
 
 use crate::{Color, Rect, Vec2};
 
-use super::{Painter, PerAxis, RenderResources, Stroke, TSTransform};
+use super::{text::FontId, Painter, PerAxis, RenderResources, Stroke, TSTransform};
 
 pub struct UI<'a, 'b> {
     input: &'a Input,
@@ -198,8 +198,17 @@ impl<'a, 'b> UI<'a, 'b> {
     }
 
     /// Get the COSMIC Text font system
-    pub fn font_system(&mut self) -> &mut cosmic_text::FontSystem {
-        &mut self.render_resources.text_resources.font_system
+    pub fn font_system(&mut self, font_id: FontId) -> Option<&mut cosmic_text::FontSystem> {
+        let font = self.render_resources.text_resources.fonts.get_mut(&font_id)?;
+        Some(&mut font.font_system)
+    }
+
+    pub fn text_font(&self) -> FontId {
+        self.render_resources.text_resources.text_font
+    }
+    
+    pub fn icon_font(&self) -> FontId {
+        self.render_resources.text_resources.icon_font
     }
 
 }

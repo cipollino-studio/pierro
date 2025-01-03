@@ -1,14 +1,18 @@
 
 
-use cosmic_text::Edit;
+use cosmic_text::{Edit, FontSystem};
 
-use crate::{vec2, Key, LayoutInfo, LogicalKey, PaintRect, PaintText, Rect, Size, TextStyle, UINodeParams, Vec2, UI};
+use crate::{vec2, Key, LayoutInfo, LogicalKey, PaintRect, PaintText, Rect, Size, UINodeParams, Vec2, UI};
 
-use super::Theme;
+use super::{label_text_style, Theme};
 
 struct TextEditMemory {
     editor: cosmic_text::Editor<'static>,
     scroll: f32
+}
+
+fn font_system<'a>(ui: &'a mut UI) -> &'a mut FontSystem {
+    ui.font_system(ui.text_font()).unwrap()
 }
 
 pub fn text_edit(ui: &mut UI, text: &mut String) {
@@ -19,6 +23,7 @@ pub fn text_edit(ui: &mut UI, text: &mut String) {
     let widget_rounding = theme.widget_rounding;
     let font_size = theme.label_font_size;
     let font_color = theme.text;
+    let text_style = label_text_style(ui);
 
     let size = 200.0;
 
@@ -31,8 +36,8 @@ pub fn text_edit(ui: &mut UI, text: &mut String) {
 
     if text_edit.mouse_pressed() && !text_edit.is_focused(ui) {
         text_edit.request_focus(ui);
-        let mut buffer = cosmic_text::Buffer::new(ui.font_system(), cosmic_text::Metrics { font_size, line_height: font_size });
-        buffer.set_text(ui.font_system(), text, cosmic_text::Attrs::new().family(cosmic_text::Family::SansSerif), cosmic_text::Shaping::Advanced);
+        let mut buffer = cosmic_text::Buffer::new(font_system(ui), cosmic_text::Metrics { font_size, line_height: font_size });
+        buffer.set_text(font_system(ui), text, cosmic_text::Attrs::new().family(cosmic_text::Family::SansSerif), cosmic_text::Shaping::Advanced);
         let editor = cosmic_text::Editor::new(buffer);
         ui.memory().insert(text_edit.id, TextEditMemory {
             editor,
@@ -64,21 +69,21 @@ pub fn text_edit(ui: &mut UI, text: &mut String) {
         for key in ui.input().keys_pressed.clone() {
             if let Some(text) = key.text {
                 for char in text.chars() {
-                    memory.editor.action(ui.font_system(), cosmic_text::Action::Insert(char));
+                    memory.editor.action(font_system(ui), cosmic_text::Action::Insert(char));
                 }
             }
             match key.logical_key {
                 Some(LogicalKey::Space) => {
-                    memory.editor.action(ui.font_system(), cosmic_text::Action::Insert(' '));
+                    memory.editor.action(font_system(ui), cosmic_text::Action::Insert(' '));
                 },
                 Some(LogicalKey::ArrowLeft) => {
-                    memory.editor.action(ui.font_system(), cosmic_text::Action::Motion(cosmic_text::Motion::Left));
+                    memory.editor.action(font_system(ui), cosmic_text::Action::Motion(cosmic_text::Motion::Left));
                 },
                 Some(LogicalKey::ArrowRight) => {
-                    memory.editor.action(ui.font_system(), cosmic_text::Action::Motion(cosmic_text::Motion::Right));
+                    memory.editor.action(font_system(ui), cosmic_text::Action::Motion(cosmic_text::Motion::Right));
                 },
                 Some(LogicalKey::Backspace) => {
-                    memory.editor.action(ui.font_system(), cosmic_text::Action::Backspace);
+                    memory.editor.action(font_system(ui), cosmic_text::Action::Backspace);
                 },
                 _ => {}
             }
@@ -90,7 +95,7 @@ pub fn text_edit(ui: &mut UI, text: &mut String) {
             *text = buffer_text.to_string();
             Some(())
         });
-        memory.editor.shape_as_needed(ui.font_system(), true);
+        memory.editor.shape_as_needed(font_system(ui), true);
 
         // Update scroll
         let cursor_pos = memory.editor.cursor_position();
@@ -107,16 +112,16 @@ pub fn text_edit(ui: &mut UI, text: &mut String) {
                 let mouse_pos = mouse_pos - Vec2::splat(widget_margin);
                 if !ui.input().key_down(Key::SHIFT) {
                     memory.editor.set_selection(cosmic_text::Selection::None);
-                    memory.editor.action(ui.font_system(), cosmic_text::Action::Click { x: (mouse_pos.x + scroll) as i32, y: mouse_pos.y as i32 });
+                    memory.editor.action(font_system(ui), cosmic_text::Action::Click { x: (mouse_pos.x + scroll) as i32, y: mouse_pos.y as i32 });
                 } else {
-                    memory.editor.action(ui.font_system(), cosmic_text::Action::Drag { x: (mouse_pos.x + scroll) as i32, y: mouse_pos.y as i32 });
+                    memory.editor.action(font_system(ui), cosmic_text::Action::Drag { x: (mouse_pos.x + scroll) as i32, y: mouse_pos.y as i32 });
                 }
             }
         }
         if text_edit.dragging() {
             if let Some(mouse_pos) = text_edit.mouse_pos(ui) {
                 let mouse_pos = mouse_pos - Vec2::splat(widget_margin);
-                memory.editor.action(ui.font_system(), cosmic_text::Action::Drag { x: (mouse_pos.x + scroll) as i32, y: mouse_pos.y as i32 });
+                memory.editor.action(font_system(ui), cosmic_text::Action::Drag { x: (mouse_pos.x + scroll) as i32, y: mouse_pos.y as i32 });
             }
         }
 
@@ -131,11 +136,7 @@ pub fn text_edit(ui: &mut UI, text: &mut String) {
         }).unwrap_or_default();
 
         ui.set_on_paint(text_edit.node_ref, move |painter, rect| {
-            painter.text(PaintText::new(paint_text, TextStyle {
-                color: font_color,
-                font_size,
-                line_height: 1.0,
-            }, Rect::to_infinity(rect.tl() + Vec2::splat(widget_margin) - Vec2::X * scroll)));
+            painter.text(PaintText::new(paint_text, text_style, Rect::to_infinity(rect.tl() + Vec2::splat(widget_margin) - Vec2::X * scroll)));
 
             let origin = rect.tl() + Vec2::splat(widget_margin);
             if let Some((cursor_x, cursor_y)) = cursor_pos {
@@ -165,11 +166,7 @@ pub fn text_edit(ui: &mut UI, text: &mut String) {
         // Paint text
         let paint_text = text.clone();
         ui.set_on_paint(text_edit.node_ref, move |painter, rect| {
-            painter.text(PaintText::new(paint_text, TextStyle {
-                color: font_color,
-                font_size,
-                line_height: 1.0,
-            }, Rect::to_infinity(rect.tl() + Vec2::splat(widget_margin))));
+            painter.text(PaintText::new(paint_text, text_style, Rect::to_infinity(rect.tl() + Vec2::splat(widget_margin))));
         });
 
     }

@@ -1,5 +1,5 @@
 
-use crate::{text::TextResources, vec2, Axis, PerAxis, Range, Rect, TSTransform, Vec2, AXES};
+use crate::{text::{FontId, TextResources}, vec2, Axis, PerAxis, Range, Rect, TSTransform, Vec2, AXES};
 
 use super::{Id, Memory, UIRef, UITree};
 
@@ -132,12 +132,13 @@ impl UITree {
         let text_style = self.get(node).params.text_style;
 
         let text_size_cache = memory.get::<TextSizeCache>(self.get(node).id); 
-        if &text_size_cache.text == text && text_size_cache.font_size == text_style.font_size && text_size_cache.line_height == text_style.line_height {
+        if &text_size_cache.text == text && text_size_cache.font_size == text_style.font_size && text_size_cache.line_height == text_style.line_height && text_size_cache.font == text_style.font {
             return text_size_cache.size.on_axis(axis);
         }
 
-        let mut buffer = cosmic_text::Buffer::new(&mut text_resources.font_system, cosmic_text::Metrics { font_size: text_style.font_size, line_height: text_style.font_size * text_style.line_height });
-        buffer.set_text(&mut text_resources.font_system, text, cosmic_text::Attrs::new().family(cosmic_text::Family::SansSerif), cosmic_text::Shaping::Advanced);
+        let Some(font) = text_resources.fonts.get_mut(&text_style.font) else { return 0.0; };
+        let mut buffer = cosmic_text::Buffer::new(&mut font.font_system, cosmic_text::Metrics { font_size: text_style.font_size, line_height: text_style.font_size * text_style.line_height });
+        buffer.set_text(&mut font.font_system, text, cosmic_text::Attrs::new().family(cosmic_text::Family::SansSerif), cosmic_text::Shaping::Advanced);
         let mut w: f32 = 0.0;
         let mut h: f32 = 0.0;
         for run in buffer.layout_runs() {
@@ -151,6 +152,7 @@ impl UITree {
         text_size_cache.text = text.clone();
         text_size_cache.font_size = text_style.font_size;
         text_size_cache.line_height = text_style.line_height;
+        text_size_cache.font = text_style.font;
         text_size_cache.size = size;
         
         size.on_axis(axis)
@@ -479,6 +481,7 @@ pub(crate) struct TextSizeCache {
     text: String,
     font_size: f32,
     line_height: f32,
+    font: FontId,
     
     size: Vec2
 }
@@ -490,7 +493,8 @@ impl Default for TextSizeCache {
             text: String::new(),
             font_size: 0.0,
             line_height: 0.0,
-            size: Vec2::ZERO
+            size: Vec2::ZERO,
+            font: FontId::default()
         }
     }
 

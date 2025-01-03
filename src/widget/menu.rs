@@ -1,7 +1,7 @@
 
 use crate::{vec2, Color, Id, Layout, LayoutInfo, Margin, Response, Size, UINodeParams, UI};
 
-use super::{close_context_menu, h_line, horizontal, is_context_menu_open, label, label_text_style, open_context_menu, render_context_menu, Theme};
+use super::{close_context_menu, h_line, horizontal, icon, is_context_menu_open, label, label_text_style, open_context_menu, render_context_menu, Theme};
 
 #[derive(Default)]
 struct MenuMemory {
@@ -104,7 +104,7 @@ pub fn menu_button<S: Into<String>>(ui: &mut UI, label_text: S) -> Response {
 
 pub fn menu_category<S: Into<String>, F: FnOnce(&mut UI)>(ui: &mut UI, label_text: S, contents: F) {
     let response = menu_button_common(ui, label_text, |ui| {
-        label(ui, ">");
+        icon(ui, "\u{E13A}");
     });
 
     let parent_id = ui.get_parent_id(response.node_ref);
