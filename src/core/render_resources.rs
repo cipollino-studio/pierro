@@ -60,8 +60,8 @@ impl RenderResources<'_> {
             format: surface_format,
             width: size.width,
             height: size.height,
-            present_mode: if surface_caps.present_modes.contains(&wgpu::PresentMode::Immediate) {
-                wgpu::PresentMode::Immediate
+            present_mode: if surface_caps.present_modes.contains(&wgpu::PresentMode::Fifo) {
+                wgpu::PresentMode::Fifo
             } else {
                 surface_caps.present_modes[0] 
             },

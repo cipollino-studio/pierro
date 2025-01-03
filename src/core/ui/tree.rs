@@ -1,9 +1,9 @@
 
 use std::fmt::Debug;
 
-use crate::{Axis, Color, Painter, PerAxis, Rect, Stroke, TSTransform, TextStyle, Vec2};
+use crate::{Axis, Color, Painter, PerAxis, Rect, Stroke, TSTransform, TextStyle, Vec2, Margin};
 
-use super::{Id, Layout, Margin, Size};
+use super::{Id, Layout, Size};
 
 #[derive(Clone, Copy, PartialEq, Eq)]
 pub enum UIRef {
@@ -42,6 +42,7 @@ pub struct UINodeParams {
     pub(crate) size: PerAxis<Size>,
     pub(crate) layout: Layout,
     pub(crate) margin: Margin,
+    pub(crate) interaction_margin: Margin,
     pub(crate) transform: TSTransform,
 
     // Styling
@@ -59,6 +60,7 @@ pub struct UINodeParams {
 
     // Input
     pub(crate) mouse: bool,
+    pub(crate) has_interaction_priority: bool,
 
     // Custom Behaviour 
     pub(crate) on_paint: Option<Box<dyn FnOnce(&mut Painter, Rect)>>
@@ -71,6 +73,7 @@ impl UINodeParams {
             size: PerAxis::new(w, h),
             layout: Layout::new(Axis::Y),
             margin: Margin::ZERO,
+            interaction_margin: Margin::ZERO,
             transform: TSTransform::IDENTITY,
             fill: Color::TRANSPARENT,
             rounding: 0.0,
@@ -80,6 +83,7 @@ impl UINodeParams {
             text_style: TextStyle::default(),
             id_source: None,
             mouse: false,
+            has_interaction_priority: false,
             on_paint: None
         }
     }
@@ -101,6 +105,11 @@ impl UINodeParams {
 
     pub fn with_margin(mut self, margin: Margin) -> Self {
         self.margin = margin;
+        self
+    }
+
+    pub fn with_interaction_margin(mut self, margin: Margin) -> Self {
+        self.interaction_margin = margin;
         self
     }
 
@@ -145,6 +154,11 @@ impl UINodeParams {
 
     pub fn sense_mouse(mut self) -> Self {
         self.mouse = true;
+        self
+    }
+
+    pub fn with_interaction_priority(mut self) -> Self {
+        self.has_interaction_priority = true;
         self
     }
 

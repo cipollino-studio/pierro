@@ -95,63 +95,6 @@ impl Layout {
 
 }
 
-#[derive(Clone, Copy)]
-pub struct Margin {
-    /// The margin at the minimum corner of the rectange (left, top)
-    min: Vec2,
-    /// The margin at the maximum corner of the rectangle (right, bottom)
-    max: Vec2 
-}
-
-impl Margin {
-
-    pub const fn new(left: f32, top: f32, right: f32, bottom: f32) -> Self {
-        Self {
-            min: vec2(left, top),
-            max: vec2(right, bottom)
-        }
-    }
-
-    pub const fn same(margin: f32) -> Self {
-        Self::new(margin, margin, margin, margin)
-    }
-
-    pub const fn horizontal(margin: f32) -> Self {
-        Self::new(margin, 0.0, margin, 0.0)
-    }
-
-    pub const fn vertical(margin: f32) -> Self {
-        Self::new(0.0, margin, 0.0, margin)
-    }
-
-    pub const ZERO: Self = Self::same(0.0);
-
-    pub fn total(&self) -> Vec2 {
-        self.min + self.max
-    }
-
-    pub fn on_axis(&self, axis: Axis) -> (f32, f32) {
-        (self.min.on_axis(axis), self.max.on_axis(axis))
-    }
-
-    pub fn apply_on_axis(&self, space: Range, axis: Axis) -> Range {
-        let (margin_min, margin_max) = self.on_axis(axis);
-        if space.size() > margin_min + margin_max {
-            Range::new(space.min + margin_min, space.max - margin_max)
-        } else {
-            Range::point(space.center())
-        }
-    }
-
-    pub fn apply(&self, rect: Rect) -> Rect {
-        Rect::from_ranges(
-            self.apply_on_axis(rect.x_range(), Axis::X),
-            self.apply_on_axis(rect.y_range(), Axis::Y) 
-        )
-    }
-
-}
-
 const TINY: f32 = 0.000000000000001;
 
 impl UITree {
@@ -202,7 +145,8 @@ impl UITree {
             h = h.max(run.line_height);
         }
 
-        let size = vec2(w, h);
+        // The size, with a small margin of error for floating point rounding issues
+        let size = vec2(w, h) + Vec2::splat(0.1);
 
         text_size_cache.text = text.clone();
         text_size_cache.font_size = text_style.font_size;
@@ -455,11 +399,14 @@ impl UITree {
         let node = self.get(node);
         let layout_mem = memory.get::<LayoutMemory>(node.id);
         layout_mem.rect = node.rect;
-        layout_mem.screen_rect = node.transform * node.rect;
+        let screen_rect = node.transform * node.rect;
+        layout_mem.screen_rect = screen_rect; 
+        layout_mem.interaction_rect = screen_rect.grow(node.params.interaction_margin);
         layout_mem.transform = node.transform;
         layout_mem.first_child = node.first_child.as_option().map(|child| self.get(child).id);
         layout_mem.next = node.next.as_option().map(|next| self.get(next).id);
         layout_mem.sense_mouse = node.params.mouse;
+        layout_mem.has_interaction_priority = node.params.has_interaction_priority;
 
         let mut child = node.first_child;
         while child.is_some() {
@@ -482,12 +429,15 @@ pub(crate) struct LayoutMemory {
     pub(crate) rect: Rect,
     /// The node's rectangle with transformations applied
     pub(crate) screen_rect: Rect,
+    /// The rectangle where the node can receive mouse interaction
+    pub(crate) interaction_rect: Rect,
     /// The full transformation applied to the node
     pub(crate) transform: TSTransform,
     pub(crate) first_child: Option<Id>,
     pub(crate) next: Option<Id>,
 
-    pub(crate) sense_mouse: bool
+    pub(crate) sense_mouse: bool,
+    pub(crate) has_interaction_priority: bool
 }
 
 impl Default for LayoutMemory {
@@ -496,10 +446,12 @@ impl Default for LayoutMemory {
         Self {
             rect: Rect::ZERO,
             screen_rect: Rect::ZERO,
+            interaction_rect: Rect::ZERO,
             transform: TSTransform::IDENTITY,
             first_child: None,
             next: None,
-            sense_mouse: false
+            sense_mouse: false,
+            has_interaction_priority: false
         }
     }
 

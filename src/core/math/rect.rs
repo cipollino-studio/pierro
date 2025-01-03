@@ -4,7 +4,7 @@ use std::fmt::Display;
 
 use crate::Animatable;
 
-use super::{vec2, Axis, Range, Vec2};
+use super::{vec2, Axis, Margin, Range, Vec2};
 
 #[derive(Clone, Copy)]
 pub struct Rect {
@@ -132,6 +132,10 @@ impl Rect {
 
     pub fn shift(&self, offset: Vec2) -> Rect {
         Self::min_max(self.min + offset, self.max + offset)
+    }
+
+    pub fn grow(&self, margin: Margin) -> Rect {
+        Self::min_max(self.min - margin.min, self.max + margin.max)
     }
 
     pub fn map(&self, from: Rect, to: Rect) -> Self {

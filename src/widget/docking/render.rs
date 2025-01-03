@@ -1,5 +1,5 @@
 
-use crate::{context_menu, dnd_drop_zone_with_size, dnd_source, h_line, h_spacing, label, label_text_style, menu_bar, v_line, v_spacing, Axis, Color, Layout, LayoutInfo, Margin, PaintRect, PerAxis, Size, Stroke, Theme, UINodeParams, UI};
+use crate::{context_menu, dnd_drop_zone_with_size, dnd_source, h_draggable_line, h_spacing, label, label_text_style, menu_bar, v_draggable_line, v_line, v_spacing, Axis, Color, Layout, LayoutInfo, Margin, PaintRect, PerAxis, Size, Stroke, Theme, UINodeParams, UI};
 
 use super::{command::{DockingCommand, TabDragSource}, DockingNodeId, DockingNodeKind, DockingState, DockingTab, DockingTree, Tabs};
 
@@ -147,26 +147,43 @@ impl<Tab: DockingTab> DockingTree<Tab> {
             DockingNodeKind::Split(split) => {
                 let nodes = split.nodes.clone();
                 let direction = split.direction;
-                ui.with_node(
+                let total_splits_size: f32 = nodes.iter().map(|(size, _)| *size).sum();
+                let response = ui.node(
                     UINodeParams::new(Size::fr(1.0), Size::fr(1.0))
-                        .with_layout(Layout::new(direction)),
-                    |ui| {
-                        for i in 0..nodes.len() {
-                            ui.with_node(
-                                UINodeParams::new_per_axis(PerAxis::along_across(direction, Size::fr(nodes[i].0), Size::fr(1.0))),
-                                |ui| {
-                                    self.render_node(ui, nodes[i].1, commands);
-                                }
-                            );
-                            if i < nodes.len() - 1 {
-                                match direction {
-                                    Axis::X => v_line(ui),
-                                    Axis::Y => h_line(ui),
-                                }
+                        .with_layout(Layout::new(direction))
+                );
+                let size = ui.memory().get::<LayoutInfo>(response.id).rect.size().on_axis(direction);
+                ui.with_parent(response.node_ref, |ui| {
+                    for i in 0..nodes.len() {
+                        ui.with_node(
+                            UINodeParams::new_per_axis(PerAxis::along_across(direction, Size::fr(nodes[i].0), Size::fr(1.0))),
+                            |ui| {
+                                self.render_node(ui, nodes[i].1, commands);
+                            }
+                        );
+                        if i < nodes.len() - 1 {
+                            let response = match direction {
+                                Axis::X => v_draggable_line(ui),
+                                Axis::Y => h_draggable_line(ui),
+                            };
+                            if response.drag_started() {
+                                response.request_focus(ui);
+                            }
+                            if response.drag_stopped() {
+                                response.release_focus(ui);
+                            }
+                            if response.dragging() {
+                                let drag = response.drag_delta(ui).on_axis(direction);
+                                commands.push(DockingCommand::MoveSplit {
+                                    node_id,
+                                    child_idx: i,
+                                    amount: total_splits_size * drag / size,
+                                    min_size: total_splits_size * 30.0 / size
+                                });
                             }
                         }
                     }
-                );
+                });
             }
         }
         Some(())

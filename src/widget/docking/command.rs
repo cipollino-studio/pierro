@@ -24,6 +24,12 @@ pub(super) enum DockingCommand<Tab: DockingTab> {
         to: DockingNodeId,
         direction: Axis,
         max: bool
+    },
+    MoveSplit {
+        node_id: DockingNodeId,
+        child_idx: usize,
+        amount: f32,
+        min_size: f32
     }
 }
 
@@ -157,6 +163,29 @@ impl<Tab: DockingTab> DockingTree<Tab> {
         Some(())
     }
 
+    fn move_split(&mut self, node_id: DockingNodeId, child_idx: usize, amount: f32, min_size: f32) -> Option<()> {
+        let split = self.get_split_mut(node_id)?;
+
+        let total_size = split.nodes[child_idx].0 + split.nodes[child_idx + 1].0;
+        let min_size = min_size.min(total_size / 2.0);
+
+        let desired_size_0 = (split.nodes[child_idx].0 + amount).max(min_size);
+        let desired_size_1 = (split.nodes[child_idx + 1].0 - amount).max(min_size);
+
+        if desired_size_0 == min_size {
+            split.nodes[child_idx].0 = min_size;
+            split.nodes[child_idx + 1].0 = total_size - min_size;
+        } else if desired_size_1 == min_size {
+            split.nodes[child_idx].0 = total_size - min_size;
+            split.nodes[child_idx + 1].0 = min_size;
+        } else {
+            split.nodes[child_idx].0 = desired_size_0;
+            split.nodes[child_idx + 1].0 = desired_size_1;
+        }
+
+        Some(())
+    }
+
     pub(super) fn execute_command(&mut self, command: DockingCommand<Tab>) {
         match command {
             DockingCommand::MoveTab { from, to } => {
@@ -170,6 +199,9 @@ impl<Tab: DockingTab> DockingTree<Tab> {
             },
             DockingCommand::Split { tab, to, direction, max } => {
                 self.split(tab, to, direction, max);
+            },
+            DockingCommand::MoveSplit { node_id, child_idx, amount, min_size } => {
+                self.move_split(node_id, child_idx, amount, min_size);
             }
         }
     }

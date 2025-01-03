@@ -196,16 +196,31 @@ impl Default for Interaction {
 
 /// Find the node hovered at a given position in screen space
 fn find_hover_node(memory: &mut Memory, node: Id, pos: Vec2, ignore: Option<Id>) -> Option<Id> {
+
+    // Check priority nodes first
     let mut child = memory.get::<LayoutMemory>(node).first_child;
     while let Some(child_id) = child {
-        if let Some(node) = find_hover_node(memory, child_id, pos, ignore) {
-            return Some(node);
+        if memory.get::<LayoutMemory>(child_id).has_interaction_priority {
+            if let Some(node) = find_hover_node(memory, child_id, pos, ignore) {
+                return Some(node);
+            }
         }
         child = memory.get::<LayoutMemory>(child_id).next;
     } 
 
+    // Then check non-priority nodes
+    let mut child = memory.get::<LayoutMemory>(node).first_child;
+    while let Some(child_id) = child {
+        if !memory.get::<LayoutMemory>(child_id).has_interaction_priority {
+            if let Some(node) = find_hover_node(memory, child_id, pos, ignore) {
+                return Some(node);
+            }
+        }
+        child = memory.get::<LayoutMemory>(child_id).next;
+    }
+
     let layout_mem = memory.get::<LayoutMemory>(node);
-    if layout_mem.screen_rect.contains(pos) && layout_mem.sense_mouse && Some(node) != ignore {
+    if layout_mem.interaction_rect.contains(pos) && layout_mem.sense_mouse && Some(node) != ignore {
         return Some(node);
     }
 
