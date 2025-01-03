@@ -1,5 +1,5 @@
 
-use crate::{context_menu, dnd_drop_zone_with_size, dnd_source, h_draggable_line, h_spacing, icon_text_style, label, menu_bar, v_draggable_line, v_line, v_spacing, Axis, Color, Layout, LayoutInfo, Margin, PaintRect, PerAxis, Size, Stroke, Theme, UINodeParams, UI};
+use crate::{context_menu, dnd_drop_zone_with_size, dnd_source, h_draggable_line, h_spacing, icon_text_style, label, menu_bar, v_draggable_line, v_line, v_spacing, Axis, Color, CursorIcon, Layout, LayoutInfo, Margin, PaintRect, PerAxis, Size, Stroke, Theme, UINodeParams, UI};
 
 use super::{command::{DockingCommand, TabDragSource}, DockingNodeId, DockingNodeKind, DockingState, DockingTab, DockingTree, Tabs};
 
@@ -179,6 +179,12 @@ impl<Tab: DockingTab> DockingTree<Tab> {
                                     child_idx: i,
                                     amount: total_splits_size * drag / size,
                                     min_size: total_splits_size * 30.0 / size
+                                });
+                            }
+                            if response.hovered || response.dragging() {
+                                ui.set_cursor(match direction {
+                                    Axis::X => CursorIcon::EwResize,
+                                    Axis::Y => CursorIcon::NsResize,
                                 });
                             }
                         }

@@ -1,7 +1,7 @@
 
 use std::any::Any;
 
-use crate::{LayoutInfo, Response, Size, Stroke, TSTransform, UINodeParams, Vec2, UI};
+use crate::{CursorIcon, LayoutInfo, Response, Size, Stroke, TSTransform, UINodeParams, Vec2, UI};
 
 use super::Theme;
 
@@ -16,6 +16,11 @@ pub fn dnd_source<T: Any, F: FnOnce(&mut UI)>(ui: &mut UI, payload: T, body: F) 
             .sense_mouse()
     ); 
 
+    if response.dragging() || response.mouse_down() {
+        ui.set_cursor(CursorIcon::Grabbing);
+    } else if response.hovered {
+        ui.set_cursor(CursorIcon::Grab);
+    }
     if response.drag_started() {
         ui.memory().set_dnd_payload(payload);
         let size = ui.memory().get::<LayoutInfo>(response.id).screen_rect.size();

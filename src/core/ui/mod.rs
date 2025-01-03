@@ -18,6 +18,9 @@ mod paint;
 mod tree;
 pub use tree::*;
 
+mod cursor;
+pub use cursor::*;
+
 use crate::{Color, Rect, Vec2};
 
 use super::{text::FontId, Painter, PerAxis, RenderResources, Stroke, TSTransform};
@@ -37,7 +40,8 @@ pub struct UI<'a, 'b> {
     curr_sibling: UIRef,
 
     // communication
-    pub(crate) request_redraw: bool
+    pub(crate) request_redraw: bool,
+    pub(crate) cursor: CursorIcon
 }
 
 impl<'a, 'b> UI<'a, 'b> {
@@ -52,7 +56,8 @@ impl<'a, 'b> UI<'a, 'b> {
             tree,
             parent_stack: vec![layer],
             curr_sibling: UIRef::Null,
-            request_redraw: false
+            request_redraw: false,
+            cursor: CursorIcon::default()
         }
     }
 
@@ -185,6 +190,10 @@ impl<'a, 'b> UI<'a, 'b> {
 
     pub fn request_redraw(&mut self) {
         self.request_redraw = true;
+    }
+
+    pub fn set_cursor(&mut self, cursor: CursorIcon) {
+        self.cursor = cursor;
     }
 
     /// Get the WebGPU render device

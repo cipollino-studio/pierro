@@ -2,7 +2,7 @@
 
 use cosmic_text::{Edit, FontSystem};
 
-use crate::{vec2, Key, LayoutInfo, LogicalKey, PaintRect, PaintText, Rect, Size, UINodeParams, Vec2, UI};
+use crate::{vec2, CursorIcon, Key, LayoutInfo, LogicalKey, PaintRect, PaintText, Rect, Size, UINodeParams, Vec2, UI};
 
 use super::{label_text_style, Theme};
 
@@ -169,6 +169,10 @@ pub fn text_edit(ui: &mut UI, text: &mut String) {
             painter.text(PaintText::new(paint_text, text_style, Rect::to_infinity(rect.tl() + Vec2::splat(widget_margin))));
         });
 
+    }
+
+    if text_edit.hovered && text_edit.contains_mouse(ui) {
+        ui.set_cursor(CursorIcon::Text);
     }
 
 }

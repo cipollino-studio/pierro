@@ -8,7 +8,7 @@ use winit::{
 
 use crate::{vec2, Input, Memory, Painter, RawInput, Rect, RenderResources, UITree, Vec2, WindowConfig, UI};
 
-use super::{Key, LogicalKey, TextRenderCache};
+use super::{CursorIcon, Key, LogicalKey, TextRenderCache};
 
 pub trait App {
 
@@ -47,6 +47,7 @@ impl<T: App> AppHandler<'_, T> {
         // ui generation
         let mut ui = UI::new(input, memory, render_resources, size, tree, layer);
         app.tick(&mut ui);
+        let cursor = ui.cursor;
         let request_redraw = ui.request_redraw; 
         let mut tree = ui.tree();
         if request_redraw {
@@ -60,6 +61,7 @@ impl<T: App> AppHandler<'_, T> {
         tree.remember_layout(memory);
 
         // ui rendering
+        render_resources.window.set_cursor(pierro_to_winit_cursor(cursor));
         let Ok(output) = render_resources.surface.get_current_texture() else { return; }; 
         let view = output.texture.create_view(&wgpu::TextureViewDescriptor::default());
         render_resources.begin_frame(size);
@@ -151,6 +153,44 @@ fn winit_to_pierro_key(key: winit::keyboard::Key) -> Option<Key> {
     }
 
     None
+}
+
+fn pierro_to_winit_cursor(cursor: CursorIcon) -> winit::window::CursorIcon {
+    match cursor {
+        CursorIcon::Default => winit::window::CursorIcon::Default,
+        CursorIcon::Crosshair => winit::window::CursorIcon::Crosshair,
+        CursorIcon::Move => winit::window::CursorIcon::Move,
+        CursorIcon::Text => winit::window::CursorIcon::Text,
+        CursorIcon::Wait => winit::window::CursorIcon::Wait,
+        CursorIcon::Help => winit::window::CursorIcon::Help,
+        CursorIcon::Progress => winit::window::CursorIcon::Progress,
+        CursorIcon::NotAllowed => winit::window::CursorIcon::NotAllowed,
+        CursorIcon::ContextMenu => winit::window::CursorIcon::ContextMenu,
+        CursorIcon::Cell => winit::window::CursorIcon::Cell,
+        CursorIcon::VerticalText => winit::window::CursorIcon::VerticalText,
+        CursorIcon::Alias => winit::window::CursorIcon::Alias,
+        CursorIcon::Copy => winit::window::CursorIcon::Copy,
+        CursorIcon::NoDrop => winit::window::CursorIcon::NoDrop,
+        CursorIcon::Grab => winit::window::CursorIcon::Grab,
+        CursorIcon::Grabbing => winit::window::CursorIcon::Grabbing,
+        CursorIcon::AllScroll => winit::window::CursorIcon::AllScroll,
+        CursorIcon::ZoomIn => winit::window::CursorIcon::ZoomIn,
+        CursorIcon::ZoomOut => winit::window::CursorIcon::ZoomOut,
+        CursorIcon::EResize => winit::window::CursorIcon::EResize,
+        CursorIcon::NResize => winit::window::CursorIcon::NResize,
+        CursorIcon::NeResize => winit::window::CursorIcon::NeResize,
+        CursorIcon::NwResize => winit::window::CursorIcon::NwResize,
+        CursorIcon::SResize => winit::window::CursorIcon::SResize,
+        CursorIcon::SeResize => winit::window::CursorIcon::SeResize,
+        CursorIcon::SwResize => winit::window::CursorIcon::SwResize,
+        CursorIcon::WResize => winit::window::CursorIcon::WResize,
+        CursorIcon::EwResize => winit::window::CursorIcon::EwResize,
+        CursorIcon::NsResize => winit::window::CursorIcon::NsResize,
+        CursorIcon::NeswResize => winit::window::CursorIcon::NeswResize,
+        CursorIcon::NwseResize => winit::window::CursorIcon::NwseResize,
+        CursorIcon::ColResize => winit::window::CursorIcon::ColResize,
+        CursorIcon::RowResize => winit::window::CursorIcon::RowResize,
+    }
 }
 
 impl<T: App> ApplicationHandler for AppHandler<'_, T> {
