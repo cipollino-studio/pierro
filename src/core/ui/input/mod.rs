@@ -286,6 +286,12 @@ impl Input {
 
         self.l_mouse.update(raw_input.l_mouse_down, self.mouse_pos);
         self.r_mouse.update(raw_input.r_mouse_down, self.mouse_pos);
+
+        // If we start dragging, set the mouse position to the previous mouse position
+        // so that the drag starting is registered on the same widget where the mouse began
+        if self.l_mouse.drag_started() || self.r_mouse.drag_started() {
+            self.mouse_pos = self.prev_mouse_pos;
+        }
         
         self.scroll = raw_input.scroll / scale_factor;
         raw_input.scroll = Vec2::ZERO;
