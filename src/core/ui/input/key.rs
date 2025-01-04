@@ -18,7 +18,10 @@ pub enum LogicalKey {
     ArrowUp,
 
     Backspace,
+    Delete,
     Escape,
+    Home,
+    End,
 
     F1,
     F2,
@@ -45,6 +48,14 @@ impl Key {
     pub const SHIFT: Self = Self {
         text: None,
         logical_key: Some(LogicalKey::Shift),
+    };
+
+    pub const COMMAND: Self = Self {
+        text: None,
+        #[cfg(target_os = "macos")]
+        logical_key: Some(LogicalKey::Command),
+        #[cfg(not(target_os = "macos"))]
+        logical_key: Some(LogicalKey::Control),
     };
 
 }

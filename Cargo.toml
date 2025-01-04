@@ -11,3 +11,4 @@ bytemuck = { version = "1.19.0", features = ["derive"] }
 etagere = "0.2.13"
 cosmic-text = "0.12.1"
 ahash = { version = "0.8.11", features = ["std"], default_features = false }
+arboard = "3.4.1"

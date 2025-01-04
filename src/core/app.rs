@@ -23,6 +23,7 @@ pub trait App {
 struct AppHandler<'a, T: App> {
     app: T,
     render_resources: Option<RenderResources<'a>>,
+    clipboard: Option<arboard::Clipboard>,
     raw_input: RawInput,
     input: Input,
     memory: Memory
@@ -30,7 +31,7 @@ struct AppHandler<'a, T: App> {
 
 impl<T: App> AppHandler<'_, T> {
 
-    pub fn tick(app: &mut T, render_resources: &mut RenderResources<'_>, raw_input: &mut RawInput, input: &mut Input, memory: &mut Memory) {
+    pub fn tick(app: &mut T, render_resources: &mut RenderResources<'_>, clipboard: Option<&mut arboard::Clipboard>, raw_input: &mut RawInput, input: &mut Input, memory: &mut Memory) {
         let physical_size = vec2(render_resources.window.inner_size().width as f32, render_resources.window.inner_size().height as f32);
         let scale_factor = render_resources.window.scale_factor() as f32;
         let size = physical_size / scale_factor;
@@ -45,7 +46,7 @@ impl<T: App> AppHandler<'_, T> {
         input.distribute(memory);
 
         // ui generation
-        let mut ui = UI::new(input, memory, render_resources, size, tree, layer);
+        let mut ui = UI::new(input, memory, render_resources, clipboard, size, tree, layer);
         app.tick(&mut ui);
         let cursor = ui.cursor;
         let request_redraw = ui.request_redraw; 
@@ -131,7 +132,10 @@ fn winit_to_pierro_key(key: winit::keyboard::Key) -> Option<Key> {
     handle_logical_key!(ArrowRight);
     handle_logical_key!(ArrowUp);
     handle_logical_key!(Backspace);
+    handle_logical_key!(Delete);
     handle_logical_key!(Escape);
+    handle_logical_key!(Home);
+    handle_logical_key!(End);
     handle_logical_key!(F1);
     handle_logical_key!(F2);
     handle_logical_key!(F3);
@@ -216,7 +220,7 @@ impl<T: App> ApplicationHandler for AppHandler<'_, T> {
                 render_resources.resize(new_size);
             },
             WindowEvent::RedrawRequested => {
-                Self::tick(&mut self.app, render_resources, &mut self.raw_input, &mut self.input, &mut self.memory);
+                Self::tick(&mut self.app, render_resources, self.clipboard.as_mut(), &mut self.raw_input, &mut self.input, &mut self.memory);
             },
 
             WindowEvent::MouseInput { device_id: _, state, button } => {
@@ -274,6 +278,7 @@ pub fn run<T: App>(app: T) {
     event_loop.run_app(&mut AppHandler {
         app,
         render_resources: None,
+        clipboard: arboard::Clipboard::new().ok(),
         raw_input: RawInput::new(),
         input: Input::new(),
         memory: Memory::new()

@@ -21,6 +21,8 @@ pub use tree::*;
 mod cursor;
 pub use cursor::*;
 
+mod clipboard;
+
 use crate::{Color, Rect, Vec2};
 
 use super::{text::FontId, Painter, PerAxis, RenderResources, Stroke, TSTransform};
@@ -31,6 +33,7 @@ pub struct UI<'a, 'b> {
     style: Style,
 
     render_resources: &'a mut RenderResources<'b>,
+    clipboard: Option<&'a mut arboard::Clipboard>,
 
     window_size: Vec2,
 
@@ -46,12 +49,13 @@ pub struct UI<'a, 'b> {
 
 impl<'a, 'b> UI<'a, 'b> {
 
-    pub(crate) fn new(input: &'a Input, memory: &'a mut Memory, render_resources: &'a mut RenderResources<'b>, window_size: Vec2, tree: UITree, layer: UIRef) -> Self {
+    pub(crate) fn new(input: &'a Input, memory: &'a mut Memory, render_resources: &'a mut RenderResources<'b>, clipboard: Option<&'a mut arboard::Clipboard>, window_size: Vec2, tree: UITree, layer: UIRef) -> Self {
         Self {
             input,
             memory,
             style: Style::new(),
             render_resources,
+            clipboard,
             window_size,
             tree,
             parent_stack: vec![layer],

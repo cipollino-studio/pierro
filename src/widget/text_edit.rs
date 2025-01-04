@@ -1,5 +1,4 @@
 
-
 use cosmic_text::{Edit, FontSystem};
 
 use crate::{vec2, CursorIcon, Key, LayoutInfo, LogicalKey, PaintRect, PaintText, Rect, Size, UINodeParams, Vec2, UI};
@@ -68,22 +67,90 @@ pub fn text_edit(ui: &mut UI, text: &mut String) {
         // Keyboard input
         for key in ui.input().keys_pressed.clone() {
             if let Some(text) = key.text {
-                for char in text.chars() {
-                    memory.editor.action(font_system(ui), cosmic_text::Action::Insert(char));
+                if ui.input().key_down(Key::COMMAND) && text.to_lowercase() == "v" {
+                    for char in ui.get_clipboard_text().unwrap_or(String::new()).chars() {
+                        memory.editor.action(font_system(ui), cosmic_text::Action::Insert(char));
+                    }
+                } else if ui.input().key_down(Key::COMMAND) && text.to_lowercase() == "c" {
+                    if let Some(text) = memory.editor.copy_selection() {
+                        ui.set_clipboard_text(text);
+                    }
+                } else if ui.input().key_down(Key::COMMAND) && text.to_lowercase() == "x" {
+                    if let Some(text) = memory.editor.copy_selection() {
+                        ui.set_clipboard_text(text);
+                    }
+                    memory.editor.delete_selection();
+                } else {
+                    for char in text.chars() {
+                        memory.editor.action(font_system(ui), cosmic_text::Action::Insert(char));
+                    }
                 }
             }
             match key.logical_key {
                 Some(LogicalKey::Space) => {
                     memory.editor.action(font_system(ui), cosmic_text::Action::Insert(' '));
                 },
-                Some(LogicalKey::ArrowLeft) => {
-                    memory.editor.action(font_system(ui), cosmic_text::Action::Motion(cosmic_text::Motion::Left));
+                Some(LogicalKey::ArrowLeft) | Some(LogicalKey::Home) => {
+                    if !ui.input().key_down(Key::SHIFT) {
+                        if let Some((min, _)) = memory.editor.selection_bounds() {
+                            memory.editor.set_cursor(min);
+                        }
+                        memory.editor.set_selection(cosmic_text::Selection::None);
+                    } else {
+                        if memory.editor.selection_bounds().is_none() {
+                            memory.editor.set_selection(cosmic_text::Selection::Normal(memory.editor.cursor()));
+                        }
+                    }
+
+                    let motion = if key.logical_key == Some(LogicalKey::Home) {
+                        cosmic_text::Motion::Home
+                    } else if ui.input().key_down(Key::COMMAND) {
+                        cosmic_text::Motion::LeftWord
+                    } else {
+                        cosmic_text::Motion::Left
+                    };
+
+                    memory.editor.action(font_system(ui), cosmic_text::Action::Motion(motion));
                 },
-                Some(LogicalKey::ArrowRight) => {
-                    memory.editor.action(font_system(ui), cosmic_text::Action::Motion(cosmic_text::Motion::Right));
+                Some(LogicalKey::ArrowRight) | Some(LogicalKey::End) => {
+                    if !ui.input().key_down(Key::SHIFT) {
+                        if let Some((_, max)) = memory.editor.selection_bounds() {
+                            memory.editor.set_cursor(max);
+                        }
+                        memory.editor.set_selection(cosmic_text::Selection::None);
+                    } else {
+                        if memory.editor.selection_bounds().is_none() {
+                            memory.editor.set_selection(cosmic_text::Selection::Normal(memory.editor.cursor()));
+                        }
+                    }
+
+                    let motion = if key.logical_key == Some(LogicalKey::End) {
+                        cosmic_text::Motion::End
+                    } else if ui.input().key_down(Key::COMMAND) {
+                        cosmic_text::Motion::RightWord
+                    } else {
+                        cosmic_text::Motion::Right
+                    };
+
+                    memory.editor.action(font_system(ui), cosmic_text::Action::Motion(motion));
                 },
                 Some(LogicalKey::Backspace) => {
+                    if ui.input().key_down(Key::COMMAND) {
+                        if memory.editor.selection_bounds().is_none() {
+                            memory.editor.set_selection(cosmic_text::Selection::Normal(memory.editor.cursor()));
+                            memory.editor.action(font_system(ui), cosmic_text::Action::Motion(cosmic_text::Motion::LeftWord));
+                        }
+                    }
                     memory.editor.action(font_system(ui), cosmic_text::Action::Backspace);
+                },
+                Some(LogicalKey::Delete) => {
+                    if ui.input().key_down(Key::COMMAND) {
+                        if memory.editor.selection_bounds().is_none() {
+                            memory.editor.set_selection(cosmic_text::Selection::Normal(memory.editor.cursor()));
+                            memory.editor.action(font_system(ui), cosmic_text::Action::Motion(cosmic_text::Motion::RightWord));
+                        }
+                    }
+                    memory.editor.action(font_system(ui), cosmic_text::Action::Delete);
                 },
                 _ => {}
             }
