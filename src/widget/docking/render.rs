@@ -1,5 +1,5 @@
 
-use crate::{button_fill_animation, dnd_drop_zone_with_size, dnd_source, h_draggable_line, horizontal_fit, icon_text_style, left_click_context_menu, menu_bar, tab, v_draggable_line, v_line, Axis, Color, CursorIcon, Layout, LayoutInfo, Margin, PaintRect, PerAxis, ScrollArea, Size, Stroke, Theme, UINodeParams, UI};
+use crate::{button_fill_animation, dnd_drop_zone_with_size, dnd_source, h_draggable_line, horizontal_fit, icon_text_style, icons, left_click_context_menu, menu_bar, tab, v_draggable_line, v_line, Axis, Color, CursorIcon, Layout, LayoutInfo, Margin, PaintRect, PerAxis, ScrollArea, Size, Stroke, Theme, UINodeParams, UI};
 
 use super::{command::{DockingCommand, TabDragSource}, DockingNodeId, DockingNodeKind, DockingState, DockingTab, DockingTree, Tabs};
 
@@ -54,7 +54,7 @@ impl<Tab: DockingTab> Tabs<Tab> {
             let icon_text_style = icon_text_style(ui);
             let add_tab_button = ui.node(
                 UINodeParams::new(Size::text().no_shrink(), Size::text())
-                    .with_text("\u{E3D4}")
+                    .with_text(icons::PLUS)
                     .with_text_style(icon_text_style)
                     .with_margin(Margin::same(margin))
                     .sense_mouse()

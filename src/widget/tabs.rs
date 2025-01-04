@@ -1,4 +1,4 @@
-use crate::{Layout, Margin, Response, Size, UINodeParams, UI};
+use crate::{icons, Layout, Margin, Response, Size, UINodeParams, UI};
 
 use super::{button_fill_animation, h_spacing, icon_text_style, label, Theme};
 
@@ -26,7 +26,7 @@ pub fn tab<S: Into<String>>(ui: &mut UI, label_text: S, selected: bool) -> TabRe
 
             let close_button = ui.node(
                 UINodeParams::new(Size::text(), Size::text())
-                    .with_text("\u{E4F6}")
+                    .with_text(icons::X)
                     .sense_mouse()
                     .with_text_style(icon_style)
             );
