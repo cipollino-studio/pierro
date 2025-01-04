@@ -35,6 +35,9 @@ pub use context_menu::*;
 mod menu;
 pub use menu::*;
 
+mod tabs;
+pub use tabs::*;
+
 mod dnd;
 pub use dnd::*;
 

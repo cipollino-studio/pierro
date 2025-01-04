@@ -48,7 +48,7 @@ impl Default for Theme {
             widget_rounding: 5.0,
             widget_stroke_width: 1.0,
 
-            color_transition_animation_rate: 0.1
+            color_transition_animation_rate: 0.3
         }
     }
 

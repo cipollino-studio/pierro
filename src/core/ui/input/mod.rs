@@ -194,14 +194,12 @@ impl Default for Interaction {
 
 }
 
-/// Find the node hovered at a given position in screen space
-fn find_hover_node(memory: &mut Memory, node: Id, pos: Vec2, ignore: Option<Id>) -> Option<Id> {
-
+fn find_interacted_node<F: Fn(&mut LayoutMemory) -> bool>(memory: &mut Memory, node: Id, pos: Vec2, ignore: Option<Id>, criteria: &F) -> Option<Id> {
     // Check priority nodes first
     let mut child = memory.get::<LayoutMemory>(node).first_child;
     while let Some(child_id) = child {
         if memory.get::<LayoutMemory>(child_id).has_interaction_priority {
-            if let Some(node) = find_hover_node(memory, child_id, pos, ignore) {
+            if let Some(node) = find_interacted_node(memory, child_id, pos, ignore, criteria) {
                 return Some(node);
             }
         }
@@ -212,7 +210,7 @@ fn find_hover_node(memory: &mut Memory, node: Id, pos: Vec2, ignore: Option<Id>)
     let mut child = memory.get::<LayoutMemory>(node).first_child;
     while let Some(child_id) = child {
         if !memory.get::<LayoutMemory>(child_id).has_interaction_priority {
-            if let Some(node) = find_hover_node(memory, child_id, pos, ignore) {
+            if let Some(node) = find_interacted_node(memory, child_id, pos, ignore, criteria) {
                 return Some(node);
             }
         }
@@ -220,11 +218,22 @@ fn find_hover_node(memory: &mut Memory, node: Id, pos: Vec2, ignore: Option<Id>)
     }
 
     let layout_mem = memory.get::<LayoutMemory>(node);
-    if layout_mem.interaction_rect.contains(pos) && layout_mem.sense_mouse && Some(node) != ignore {
+    if layout_mem.interaction_rect.contains(pos) && criteria(layout_mem) && Some(node) != ignore {
         return Some(node);
     }
 
     None
+
+}
+
+/// Find the node hovered at a given position in screen space
+fn find_hover_node(memory: &mut Memory, node: Id, pos: Vec2, ignore: Option<Id>) -> Option<Id> {
+    find_interacted_node(memory, node, pos, ignore, &|mem| mem.sense_mouse)
+}
+
+/// Find the scrollable at a given position in screen space
+fn find_scrollable_node(memory: &mut Memory, node: Id, pos: Vec2, ignore: Option<Id>) -> Option<Id> {
+    find_interacted_node(memory, node, pos, ignore, &|mem| mem.sense_scroll)
 }
 
 impl Input {
@@ -325,6 +334,15 @@ impl Input {
             }
             None
         });
+        let scrollable_node = (|| {
+            let mouse_pos = self.mouse_pos?;
+            for layer in layer_ids.iter().rev() { 
+                if let Some(scrollable_node) = find_scrollable_node(memory, *layer, mouse_pos, None) {
+                    return Some(scrollable_node)
+                }
+            }
+            None
+        })();
         let through_hovered_node = self.mouse_pos.map(|mouse_pos| {
             for layer in layer_ids.iter().rev() { 
                 if let Some(hovered_node) = find_hover_node(memory, *layer, mouse_pos, memory.get_focus()) {
@@ -336,11 +354,12 @@ impl Input {
 
         for (id, interaction) in memory.iter_mut::<Interaction>() {
             let hovered = Some(id) == hovered_node;
+            let scrollable = Some(id) == scrollable_node;
             interaction.hovered = hovered;
             interaction.through_hovered = Some(id) == through_hovered_node;
             interaction.l_mouse = if hovered { self.l_mouse } else { MouseButton::new() };
             interaction.r_mouse = if hovered { self.r_mouse } else { MouseButton::new() };
-            interaction.scroll = if hovered { self.scroll } else { Vec2::ZERO };
+            interaction.scroll = if scrollable { self.scroll } else { Vec2::ZERO };
         }
 
         // If we're not holding the mouse down, we can't be drag and dropping anything

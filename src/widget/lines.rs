@@ -7,7 +7,7 @@ fn line_params(ui: &mut UI, axis: Axis) -> UINodeParams {
     let theme = ui.style::<Theme>(); 
     let stroke_color = theme.stroke;
     let stroke_width = theme.widget_stroke_width;
-    UINodeParams::new_per_axis(PerAxis::along_across(axis, Size::fr(1.0), Size::px(stroke_width)))
+    UINodeParams::new_per_axis(PerAxis::along_across(axis, Size::fr(1.0), Size::px(stroke_width).no_shrink()))
         .with_fill(stroke_color)
 }
 

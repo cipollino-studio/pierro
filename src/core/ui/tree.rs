@@ -60,6 +60,7 @@ pub struct UINodeParams {
 
     // Input
     pub(crate) mouse: bool,
+    pub(crate) scroll: bool,
     pub(crate) has_interaction_priority: bool,
 
     // Custom Behaviour 
@@ -83,6 +84,7 @@ impl UINodeParams {
             text_style: TextStyle::default(),
             id_source: None,
             mouse: false,
+            scroll: false,
             has_interaction_priority: false,
             on_paint: None
         }
@@ -154,6 +156,11 @@ impl UINodeParams {
 
     pub fn sense_mouse(mut self) -> Self {
         self.mouse = true;
+        self
+    }
+    
+    pub fn sense_scroll(mut self) -> Self {
+        self.scroll = true;
         self
     }
 

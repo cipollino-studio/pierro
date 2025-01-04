@@ -1,63 +1,67 @@
 
-use crate::{context_menu, dnd_drop_zone_with_size, dnd_source, h_draggable_line, h_spacing, icon_text_style, label, menu_bar, v_draggable_line, v_line, v_spacing, Axis, Color, CursorIcon, Layout, LayoutInfo, Margin, PaintRect, PerAxis, Size, Stroke, Theme, UINodeParams, UI};
+use crate::{button_fill_animation, dnd_drop_zone_with_size, dnd_source, h_draggable_line, horizontal_fit, icon_text_style, left_click_context_menu, menu_bar, tab, v_draggable_line, v_line, Axis, Color, CursorIcon, Layout, LayoutInfo, Margin, PaintRect, PerAxis, ScrollArea, Size, Stroke, Theme, UINodeParams, UI};
 
 use super::{command::{DockingCommand, TabDragSource}, DockingNodeId, DockingNodeKind, DockingState, DockingTab, DockingTree, Tabs};
-
 
 impl<Tab: DockingTab> Tabs<Tab> {
 
     fn render_tab(&mut self, ui: &mut UI, node_id: DockingNodeId, tab_idx: usize, commands: &mut Vec<DockingCommand<Tab>>) {
+        let selected = self.active_tab == tab_idx;
         let theme = ui.style::<Theme>();
-        let window_bg = theme.bg_light;
-        let margin = theme.widget_margin;
-        let icon_style = icon_text_style(ui);
-
-        let response = dnd_source(ui, TabDragSource { node_id, tab_idx }, |ui| {
-            ui.with_node(
-                UINodeParams::new(Size::fit(), Size::fit())
-                    .with_fill(window_bg)
-                    .with_layout(Layout::horizontal())
-                    .with_margin(Margin::same(margin)),
-                |ui| {
-                    label(ui, self.tabs[tab_idx].title());
-                    h_spacing(ui, 6.0);
-
-                    let close_button = ui.node(
-                        UINodeParams::new(Size::text(), Size::text())
-                            .with_text("\u{E4F6}")
-                            .sense_mouse()
-                            .with_text_style(icon_style)
-                    );
-                    if close_button.mouse_released() {
-                        commands.push(DockingCommand::CloseTab { tab: TabDragSource { node_id, tab_idx } });
-                    }
-                }
-            );
+        let base_color = if selected { theme.bg_light } else { theme.bg_dark };
+        let (dnd_response, tab_response) = dnd_source(ui, TabDragSource { node_id, tab_idx }, |ui| {
+            let tab_response = tab(ui, self.tabs[tab_idx].title(), selected);
+            if tab_response.close_button.mouse_released() {
+                commands.push(DockingCommand::CloseTab { tab: TabDragSource { node_id, tab_idx } });
+            }
+            ui.set_sense_mouse(tab_response.tab.node_ref, false);
+            tab_response.tab
         });
-        if response.mouse_released() {
+        if dnd_response.mouse_released() {
             self.active_tab = tab_idx;
         }
+        button_fill_animation(ui, tab_response.node_ref, &dnd_response, base_color); 
     }
 
     fn render(&mut self, ui: &mut UI, node_id: DockingNodeId, commands: &mut Vec<DockingCommand<Tab>>) {
 
         let theme = ui.style::<Theme>();
         let window_bg = theme.bg_light;
+        let margin = theme.widget_margin;
         let split_overlay_stroke_color = theme.text_active;
 
         menu_bar(ui, |ui| {
-            v_spacing(ui, 20.0);
-            for tab_idx in 0..self.tabs.len() {
-                self.render_tab(ui, node_id, tab_idx, commands);
-                v_line(ui);
-            }
 
-            let (tab_bar_response, added_tab) = dnd_drop_zone_with_size::<TabDragSource, _>(ui, Size::fr(1.0), Size::fr(1.0), |_| {});
+            ScrollArea::default()
+                .hide_scroll_bars()
+                .with_size(Size::fit(), Size::fr(1.0))
+                .render(ui, |ui| {
+                    horizontal_fit(ui, |ui| { 
+                        for tab_idx in 0..self.tabs.len() {
+                            self.render_tab(ui, node_id, tab_idx, commands);
+                            v_line(ui);
+                        }
+                    });
+            });
+
+            let (_, added_tab) = dnd_drop_zone_with_size::<TabDragSource, _>(ui, Size::fr(1.0), Size::fr(1.0), |_| {});
             if let Some(added_tab) = added_tab {
                 commands.push(DockingCommand::MoveTab { from: added_tab, to: node_id });
             }
 
-            context_menu(ui, &tab_bar_response, |ui| {
+            v_line(ui);
+
+            let icon_text_style = icon_text_style(ui);
+            let add_tab_button = ui.node(
+                UINodeParams::new(Size::text().no_shrink(), Size::text())
+                    .with_text("\u{E3D4}")
+                    .with_text_style(icon_text_style)
+                    .with_margin(Margin::same(margin))
+                    .sense_mouse()
+            );
+            button_fill_animation(ui, add_tab_button.node_ref, &add_tab_button, window_bg);
+
+            left_click_context_menu(ui, &add_tab_button, |ui| {
                 Tab::add_tab_dropdown(ui, |tab| {
                     commands.push(DockingCommand::AddTab { tab, to: node_id });
                 }); 

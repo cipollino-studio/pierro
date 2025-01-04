@@ -408,6 +408,7 @@ impl UITree {
         layout_mem.first_child = node.first_child.as_option().map(|child| self.get(child).id);
         layout_mem.next = node.next.as_option().map(|next| self.get(next).id);
         layout_mem.sense_mouse = node.params.mouse;
+        layout_mem.sense_scroll = node.params.scroll;
         layout_mem.has_interaction_priority = node.params.has_interaction_priority;
 
         let mut child = node.first_child;
@@ -439,6 +440,7 @@ pub(crate) struct LayoutMemory {
     pub(crate) next: Option<Id>,
 
     pub(crate) sense_mouse: bool,
+    pub(crate) sense_scroll: bool,
     pub(crate) has_interaction_priority: bool
 }
 
@@ -453,6 +455,7 @@ impl Default for LayoutMemory {
             first_child: None,
             next: None,
             sense_mouse: false,
+            sense_scroll: false,
             has_interaction_priority: false
         }
     }

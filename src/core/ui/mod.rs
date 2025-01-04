@@ -150,6 +150,10 @@ impl<'a, 'b> UI<'a, 'b> {
         &self.input
     }
 
+    pub fn window_size(&self) -> Vec2 {
+        self.window_size
+    }
+
     pub fn memory(&mut self) -> &mut Memory {
         &mut self.memory
     }
@@ -182,6 +186,10 @@ impl<'a, 'b> UI<'a, 'b> {
 
     pub fn set_text<S: Into<String>>(&mut self, node: UIRef, text: S) {
         self.tree.get_mut(node).params.text = Some(text.into());
+    }
+
+    pub fn set_sense_mouse(&mut self, node: UIRef, mouse: bool) {
+        self.tree.get_mut(node).params.mouse = mouse;
     }
     
     pub fn set_on_paint<F: FnOnce(&mut Painter, Rect) + 'static>(&mut self, node: UIRef, on_paint: F) {

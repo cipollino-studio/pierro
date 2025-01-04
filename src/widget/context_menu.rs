@@ -1,5 +1,5 @@
 
-use crate::{Id, Margin, Response, Size, TSTransform, UINodeParams, Vec2, UI};
+use crate::{Id, LayoutInfo, Margin, Response, Size, TSTransform, UINodeParams, Vec2, UI};
 
 use super::Theme;
 
@@ -9,6 +9,15 @@ struct ContextMenuMemory {
 
 pub fn context_menu<F: FnOnce(&mut UI)>(ui: &mut UI, response: &Response, body: F) {
     if response.right_mouse_released() {
+        let position = ui.input().mouse_pos.unwrap_or(Vec2::ZERO);
+        open_context_menu(ui, response.id, position);        
+    }
+
+    render_context_menu(ui, response.id, body);
+}
+
+pub fn left_click_context_menu<F: FnOnce(&mut UI)>(ui: &mut UI, response: &Response, body: F) {
+    if response.mouse_released() {
         let position = ui.input().mouse_pos.unwrap_or(Vec2::ZERO);
         open_context_menu(ui, response.id, position);        
     }
@@ -38,7 +47,7 @@ pub fn render_context_menu<F: FnOnce(&mut UI)>(ui: &mut UI, id: Id, body: F) {
         let stroke = theme.widget_stroke();
         let margin = theme.widget_margin;
 
-        let (layer, _) = ui.layer(|ui| {
+        let (layer, menu) = ui.layer(|ui| {
             let (menu, _) = ui.with_node(
                 UINodeParams::new(Size::fit(), Size::fit())
                     .with_fill(fill)
@@ -50,7 +59,13 @@ pub fn render_context_menu<F: FnOnce(&mut UI)>(ui: &mut UI, id: Id, body: F) {
             if menu.mouse_pressed_outside(ui) {
                 close_context_menu(ui, id);
             }
+
+            menu
         });
+
+        let menu_size = ui.memory().get::<LayoutInfo>(menu.id).rect.size();
+        let max_position = ui.window_size() - menu_size;
+        let position = position.min(max_position).max(Vec2::ZERO);
 
         ui.set_transform(layer, TSTransform::translation(position));
     }
