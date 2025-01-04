@@ -8,6 +8,8 @@ struct ContextMenuMemory {
 }
 
 pub fn context_menu<F: FnOnce(&mut UI)>(ui: &mut UI, response: &Response, body: F) {
+    ui.set_sense_mouse(response.node_ref, true);
+
     if response.right_mouse_released() {
         let position = ui.input().mouse_pos.unwrap_or(Vec2::ZERO);
         open_context_menu(ui, response.id, position);        
@@ -17,6 +19,8 @@ pub fn context_menu<F: FnOnce(&mut UI)>(ui: &mut UI, response: &Response, body: 
 }
 
 pub fn left_click_context_menu<F: FnOnce(&mut UI)>(ui: &mut UI, response: &Response, body: F) {
+    ui.set_sense_mouse(response.node_ref, true);
+
     if response.mouse_released() {
         let position = ui.input().mouse_pos.unwrap_or(Vec2::ZERO);
         open_context_menu(ui, response.id, position);        

@@ -6,7 +6,7 @@ use std::{collections::HashMap, usize};
 
 use crate::{Axis, UI};
 
-pub trait DockingTab: Clone {
+pub trait DockingTab: Sized {
 
     fn title(&self) -> String;
     fn render(&mut self, ui: &mut UI);

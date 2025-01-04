@@ -23,6 +23,9 @@ pub use icon::*;
 mod button;
 pub use button::*;
 
+mod checkbox;
+pub use checkbox::*;
+
 mod scroll;
 pub use scroll::*;
 

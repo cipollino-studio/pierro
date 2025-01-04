@@ -25,7 +25,7 @@ mod clipboard;
 
 use crate::{Color, Rect, Vec2};
 
-use super::{text::FontId, Painter, PerAxis, RenderResources, Stroke, TSTransform};
+use super::{text::FontId, Margin, Painter, PerAxis, RenderResources, Stroke, TSTransform};
 
 pub struct UI<'a, 'b> {
     input: &'a Input,
@@ -174,6 +174,10 @@ impl<'a, 'b> UI<'a, 'b> {
 
     pub fn set_size(&mut self, node: UIRef, width: Size, height: Size) {
         self.tree.get_mut(node).params.size = PerAxis::new(width, height);
+    }
+    
+    pub fn set_margin(&mut self, node: UIRef, margin: Margin) {
+        self.tree.get_mut(node).params.margin = margin; 
     }
 
     pub fn set_fill(&mut self, node: UIRef, fill: Color) {

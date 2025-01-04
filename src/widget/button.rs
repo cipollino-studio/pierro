@@ -17,7 +17,7 @@ pub fn button_fill_animation(ui: &mut UI, node_to_fill: UIRef, interaction: &Res
     ui.set_fill(node_to_fill, color);
 }
 
-fn button_with_text_style(ui: &mut UI, label: String, style: TextStyle) -> Response {
+pub fn button_with_text_style<S: Into<String>>(ui: &mut UI, label: S, style: TextStyle) -> Response {
     let theme = ui.style::<Theme>();
     let bg = theme.bg_button;
     let margin = theme.widget_margin;
@@ -40,10 +40,10 @@ fn button_with_text_style(ui: &mut UI, label: String, style: TextStyle) -> Respo
 
 pub fn button<S: Into<String>>(ui: &mut UI, label: S) -> Response {
     let text_style = label_text_style(ui);
-    button_with_text_style(ui, label.into(), text_style)
+    button_with_text_style(ui, label, text_style)
 }
 
 pub fn icon_button<S: Into<String>>(ui: &mut UI, icon: S) -> Response {
     let text_style = icon_text_style(ui);
-    button_with_text_style(ui, icon.into(), text_style)
+    button_with_text_style(ui, icon, text_style)
 }
