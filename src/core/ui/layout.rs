@@ -60,9 +60,25 @@ impl Size {
 
 }
 
+#[derive(Clone, Copy, PartialEq, Eq)]
+pub enum Justify {
+    Min,
+    Center,
+    Max
+}
+
+#[derive(Clone, Copy, PartialEq, Eq)]
+pub enum Align {
+    Min,
+    Center,
+    Max
+}
+
 #[derive(Clone, Copy)]
 pub struct Layout {
     axis: Axis,
+    justify: Justify,
+    align: Align,
     allow_overflow: PerAxis<bool>
 }
 
@@ -71,6 +87,8 @@ impl Layout {
     pub fn new(axis: Axis) -> Self {
         Self {
             axis,
+            justify: Justify::Min,
+            align: Align::Min,
             allow_overflow: PerAxis::splat(false)
         }
     }
@@ -81,6 +99,40 @@ impl Layout {
 
     pub fn vertical() -> Self {
         Self::new(Axis::Y)
+    }
+
+    pub fn with_justify(mut self, justify: Justify) -> Self {
+        self.justify = justify;
+        self
+    }
+
+    pub fn justify_min(self) -> Self {
+        self.with_justify(Justify::Min)
+    }
+
+    pub fn justify_center(self) -> Self {
+        self.with_justify(Justify::Center)
+    }
+
+    pub fn justify_max(self) -> Self {
+        self.with_justify(Justify::Max)
+    }
+
+    pub fn with_align(mut self, align: Align) -> Self {
+        self.align = align;
+        self
+    }
+
+    pub fn align_min(self) -> Self {
+        self.with_align(Align::Min)
+    }
+
+    pub fn align_center(self) -> Self {
+        self.with_align(Align::Center)
+    }
+
+    pub fn align_max(self) -> Self {
+        self.with_align(Align::Max)
     }
 
     pub fn with_horizontal_overflow(mut self) -> Self {
@@ -292,7 +344,15 @@ impl UITree {
         let underfill = (space.size() - total_size).max(0.0); 
         let underfill_denominator_inv = if underfill_denominator < 0.00001 { 1.0 } else { 1.0 / underfill_denominator }; 
 
-        let mut offset = 0.0;
+        let mut offset = if underfill_denominator < 0.00001 {
+            match layout.justify {
+                Justify::Min => 0.0,
+                Justify::Center => underfill / 2.0,
+                Justify::Max => underfill,
+            }
+        } else {
+            0.0
+        };
         let mut child_ref = self.get(node).first_child;
         while child_ref.is_some() {
             let child = self.get_mut(child_ref);
@@ -337,7 +397,11 @@ impl UITree {
                     size
                 }
             };
-            let child_space = Range::min_size(space.min, size);
+            let child_space = match layout.align {
+                Align::Min => Range::min_size(space.min, size),
+                Align::Center => Range::center_size(space.center(), size),
+                Align::Max => Range::max_size(space.max, size),
+            };
             child.rect.set_axis_range(axis, child_space);
             self.calc_layout(child_ref, self.get(child_ref).id, child_space, axis, memory);
             child_ref = self.get(child_ref).next;

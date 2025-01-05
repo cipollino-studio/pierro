@@ -1,3 +1,5 @@
+use pierro::UINodeParams;
+
 
 struct Gallery {
     docking_state: pierro::DockingState<GalleryTab>
@@ -18,30 +20,66 @@ impl Basic {
     }
 
     fn ui(&mut self, ui: &mut pierro::UI) {
-        pierro::label(ui, "A label");
+        pierro::scroll_area(ui, |ui| {
+            pierro::label(ui, "A label");
 
-        pierro::button(ui, "A button");
+            pierro::button(ui, "A button");
 
-        pierro::text_edit(ui, &mut self.text_edit_text);
+            pierro::text_edit(ui, &mut self.text_edit_text);
 
-        pierro::checkbox_labeled(ui, "A checkbox", &mut self.checkbox_state);
+            pierro::checkbox_labeled(ui, "A checkbox", &mut self.checkbox_state);
 
-        let context_menu_response = pierro::label(ui, "Context menu (right click me!)");
-        pierro::context_menu(ui, &context_menu_response, |ui| {
-            pierro::label(ui, "Inside the context menu");
-        });
+            let context_menu_response = pierro::label(ui, "Context menu (right click me!)");
+            pierro::context_menu(ui, &context_menu_response, |ui| {
+                pierro::label(ui, "Inside the context menu");
+            });
 
-        pierro::collapsing_header(ui, "A collapsing header", |ui| {
-            for i in 0..50 {
-                pierro::label(ui, i.to_string());
-            }
+            pierro::collapsing_header(ui, "A collapsing header", |ui| {
+                for i in 0..50 {
+                    pierro::label(ui, i.to_string());
+                }
+            });
         });
     }
 
 }
 
+struct Layout {
+
+}
+
+impl Layout {
+    
+    fn new() -> Self {
+        Self {
+
+        }
+    }
+
+    fn node(&self, ui: &mut pierro::UI, color: pierro::Color) {
+        ui.node(
+            UINodeParams::new(pierro::Size::px(100.0), pierro::Size::px(100.0))
+                .with_fill(color)
+        );
+    }
+
+    fn ui(&mut self, ui: &mut pierro::UI) {
+        pierro::container(ui,
+            pierro::Size::fr(1.0),
+            pierro::Size::fr(1.0),
+            pierro::Layout::horizontal().align_center().justify_center(),
+            |ui| {
+                self.node(ui, pierro::Color::RED);   
+                self.node(ui, pierro::Color::GREEN);   
+                self.node(ui, pierro::Color::BLUE);
+            });
+    }
+
+}
+
 enum GalleryTab {
-    Basic(Basic)
+    Basic(Basic),
+    Layout(Layout)
 }
 
 impl pierro::DockingTab for GalleryTab {
@@ -49,20 +87,23 @@ impl pierro::DockingTab for GalleryTab {
     fn title(&self) -> String {
         match self {
             GalleryTab::Basic(..) => "Basic Widgets".to_owned(),
+            GalleryTab::Layout(..) => "Layout".to_owned()
         }
     }
 
     fn render(&mut self, ui: &mut pierro::UI) {
-        pierro::scroll_area(ui, |ui| {
             match self {
                 GalleryTab::Basic(basic) => basic.ui(ui),
+                GalleryTab::Layout(layout) => layout.ui(ui)
             }
-        });
     }
 
     fn add_tab_dropdown<F: FnMut(Self)>(ui: &mut pierro::UI, mut add_tab: F) {
         if pierro::menu_button(ui, "Basic Widgets").mouse_released() {
             add_tab(Self::Basic(Basic::new()));
+        }
+        if pierro::menu_button(ui, "Layout").mouse_released() {
+            add_tab(Self::Layout(Layout::new()));
         }
     }
 

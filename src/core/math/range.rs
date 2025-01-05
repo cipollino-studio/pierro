@@ -18,6 +18,14 @@ impl Range {
         Self::new(min, min + size)
     }
 
+    pub fn max_size(max: f32, size: f32) -> Self {
+        Self::new(max - size, max)
+    }
+
+    pub fn center_size(center: f32, size: f32) -> Self {
+        Self::new(center - size / 2.0, center + size / 2.0)
+    }
+
     pub fn point(pt: f32) -> Self {
         Self::min_size(pt, 0.0)
     }

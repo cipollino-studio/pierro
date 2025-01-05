@@ -1,6 +1,10 @@
 
 use crate::{Layout, Response, Size, UINodeParams, UI};
 
+pub fn container<R, F: FnOnce(&mut UI) -> R>(ui: &mut UI, width: Size, height: Size, layout: Layout, body: F) -> (Response, R) {
+    ui.with_node(UINodeParams::new(width, height).with_layout(layout), body)
+}
+
 pub fn horizontal<R, F: FnOnce(&mut UI) -> R>(ui: &mut UI, body: F) -> (Response, R) {
     let container = ui.node(
         UINodeParams::new(Size::fr(1.0), Size::fit())
