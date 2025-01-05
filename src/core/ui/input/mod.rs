@@ -300,8 +300,7 @@ impl Input {
 
     /// Update the input given the raw input from the window.
     /// Resets the raw input in preparation for the next frame.
-    /// Returns true if an additional redraw should be requested.
-    pub(crate) fn update(&mut self, raw_input: &mut RawInput, scale_factor: f32) -> bool {
+    pub(crate) fn update(&mut self, raw_input: &mut RawInput, scale_factor: f32) {
         self.prev_mouse_pos = self.mouse_pos;
         self.mouse_pos = raw_input.mouse_pos.map(|pos| pos / scale_factor);
 
@@ -331,8 +330,6 @@ impl Input {
 
         self.ime_preedit = raw_input.ime_preedit.clone();
         self.ime_commit = std::mem::replace(&mut raw_input.ime_commit, None);
-
-        self.l_mouse.released() || self.r_mouse.released() || !self.keys_released.is_empty()
 
     }
 

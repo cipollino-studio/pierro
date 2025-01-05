@@ -23,7 +23,9 @@ struct AppHandler<'a, T: App> {
     clipboard: Option<arboard::Clipboard>,
     raw_input: RawInput,
     input: Input,
-    memory: Memory
+    memory: Memory,
+
+    redraw_counter: i32
 }
 
 impl<T: App> AppHandler<'_, T> {
@@ -37,9 +39,7 @@ impl<T: App> AppHandler<'_, T> {
         let layer = tree.add_layer(size); 
 
         // distribute input
-        if input.update(raw_input, scale_factor) {
-            render_resources.request_redraw();
-        }
+        input.update(raw_input, scale_factor);
         input.distribute(memory);
 
         // ui generation
@@ -223,6 +223,7 @@ impl<T: App> ApplicationHandler for AppHandler<'_, T> {
     ) {
         let Some(render_resources) = &mut self.render_resources else { return; };
         if event != WindowEvent::RedrawRequested {
+            self.redraw_counter = 2;
             render_resources.request_redraw();
         }
         match event {
@@ -231,6 +232,10 @@ impl<T: App> ApplicationHandler for AppHandler<'_, T> {
             },
             WindowEvent::RedrawRequested => {
                 Self::tick(&mut self.app, render_resources, self.clipboard.as_mut(), &mut self.raw_input, &mut self.input, &mut self.memory);
+                if self.redraw_counter > 0 {
+                    self.redraw_counter -= 1;
+                    render_resources.request_redraw();
+                }
             },
 
             WindowEvent::MouseInput { device_id: _, state, button } => {
@@ -298,7 +303,8 @@ pub fn run<T: App>(app: T) {
         clipboard: arboard::Clipboard::new().ok(),
         raw_input: RawInput::new(),
         input: Input::new(),
-        memory: Memory::new()
+        memory: Memory::new(),
+        redraw_counter: 0
     }).unwrap();
 
 }
