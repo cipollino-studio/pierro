@@ -1,9 +1,9 @@
 
 use crate::{icons, Layout, LayoutInfo, Margin, PerAxis, Size, UINodeParams, UI};
 
-use super::{button_fill_animation, close_context_menu, icon_text_style, is_context_menu_open, label_text_style, open_context_menu, render_context_menu, Theme};
+use super::{button_fill_animation, close_context_menu, h_spacing, horizontal_fit_centered, icon_text_style, is_context_menu_open, label, label_text_style, open_context_menu, render_context_menu, Theme};
 
-pub fn dropdown<S: Into<String>, F: FnOnce(&mut UI)>(ui: &mut UI, label: S, contents: F) {
+pub fn dropdown<S: Into<String>, F: FnOnce(&mut UI)>(ui: &mut UI, dropdown_text: S, contents: F) {
     let theme = ui.style::<Theme>(); 
     let bg = theme.bg_text_field;
     let rounding = theme.widget_rounding;
@@ -20,7 +20,7 @@ pub fn dropdown<S: Into<String>, F: FnOnce(&mut UI)>(ui: &mut UI, label: S, cont
         |ui| {
             ui.node(
                 UINodeParams::new(Size::px(80.0), Size::text())
-                    .with_text(label)
+                    .with_text(dropdown_text)
                     .with_text_style(label_text_style)
             );
             ui.node(
@@ -42,4 +42,12 @@ pub fn dropdown<S: Into<String>, F: FnOnce(&mut UI)>(ui: &mut UI, label: S, cont
         open_context_menu(ui, response.id, rect.bl(), PerAxis::new(Some(rect.width()), None));
     }
 
+}
+
+pub fn dropdown_labeled<L: Into<String>, S: Into<String>, F: FnOnce(&mut UI)>(ui: &mut UI, label_text: L, dropdown_text: S, contents: F) {
+    horizontal_fit_centered(ui, |ui| {
+        label(ui, label_text);
+        h_spacing(ui, 5.0);
+        dropdown(ui, dropdown_text, contents);
+    });
 }

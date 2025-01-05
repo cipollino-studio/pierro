@@ -21,6 +21,14 @@ pub fn horizontal_fit<R, F: FnOnce(&mut UI) -> R>(ui: &mut UI, body: F) -> (Resp
     (container, ui.with_parent(container.node_ref, body))
 }
 
+pub fn horizontal_fit_centered<R, F: FnOnce(&mut UI) -> R>(ui: &mut UI, body: F) -> (Response, R) {
+    let container = ui.node(
+        UINodeParams::new(Size::fit(), Size::fit())
+            .with_layout(Layout::horizontal().align_center())
+    );
+    (container, ui.with_parent(container.node_ref, body))
+}
+
 pub fn vertical<R, F: FnOnce(&mut UI) -> R>(ui: &mut UI, body: F) -> (Response, R) {
     let container = ui.node(
         UINodeParams::new(Size::fr(1.0), Size::fit())
@@ -33,6 +41,14 @@ pub fn vertical_fit<R, F: FnOnce(&mut UI) -> R>(ui: &mut UI, body: F) -> (Respon
     let container = ui.node(
         UINodeParams::new(Size::fit(), Size::fit())
             .with_layout(Layout::vertical())
+    );
+    (container, ui.with_parent(container.node_ref, body))
+}
+
+pub fn vertical_fit_centered<R, F: FnOnce(&mut UI) -> R>(ui: &mut UI, body: F) -> (Response, R) {
+    let container = ui.node(
+        UINodeParams::new(Size::fit(), Size::fit())
+            .with_layout(Layout::vertical().align_center())
     );
     (container, ui.with_parent(container.node_ref, body))
 }

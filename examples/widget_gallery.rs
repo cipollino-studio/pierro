@@ -53,14 +53,18 @@ impl Basic {
 }
 
 struct Layout {
-
+    axis: pierro::Axis,
+    justify: pierro::Justify,
+    align: pierro::Align
 }
 
 impl Layout {
     
     fn new() -> Self {
         Self {
-
+            axis: pierro::Axis::X,
+            justify: pierro::Justify::Center,
+            align: pierro::Align::Center
         }
     }
 
@@ -72,10 +76,56 @@ impl Layout {
     }
 
     fn ui(&mut self, ui: &mut pierro::UI) {
+
+        pierro::dropdown_labeled(ui, "Axis: ", match self.axis {
+            pierro::Axis::X => "X",
+            pierro::Axis::Y => "Y",
+        }, |ui| {
+            if pierro::menu_button(ui, "X").mouse_released() {
+                self.axis = pierro::Axis::X;
+            }
+            if pierro::menu_button(ui, "Y").mouse_released() {
+                self.axis = pierro::Axis::Y;
+            }
+        });
+
+        pierro::dropdown_labeled(ui, "Justify: ", match self.justify {
+            pierro::Justify::Min => "Min",
+            pierro::Justify::Center => "Center",
+            pierro::Justify::Max => "Max",
+        }, |ui| {
+            if pierro::menu_button(ui, "Min").mouse_released() {
+                self.justify = pierro::Justify::Min;
+            }
+            if pierro::menu_button(ui, "Center").mouse_released() {
+                self.justify = pierro::Justify::Center;
+            }
+            if pierro::menu_button(ui, "Max").mouse_released() {
+                self.justify = pierro::Justify::Max;
+            }
+        });
+
+        pierro::dropdown_labeled(ui, "Align: ", match self.align {
+            pierro::Align::Min => "Min",
+            pierro::Align::Center => "Center",
+            pierro::Align::Max => "Max",
+        }, |ui| {
+            if pierro::menu_button(ui, "Min").mouse_released() {
+                self.align = pierro::Align::Min;
+            }
+            if pierro::menu_button(ui, "Center").mouse_released() {
+                self.align = pierro::Align::Center;
+            }
+            if pierro::menu_button(ui, "Max").mouse_released() {
+                self.align = pierro::Align::Max;
+            }
+        });
+
+        pierro::h_divider(ui);
         pierro::container(ui,
             pierro::Size::fr(1.0),
             pierro::Size::fr(1.0),
-            pierro::Layout::horizontal().align_center().justify_center(),
+            pierro::Layout::new(self.axis).with_justify(self.justify).with_align(self.align),
             |ui| {
                 self.node(ui, pierro::Color::RED);   
                 self.node(ui, pierro::Color::GREEN);   
