@@ -65,6 +65,8 @@ pub fn text_edit(ui: &mut UI, text: &mut String) {
     if let Some(mut memory) = ui.memory().remove::<TextEditMemory>(text_edit.id) {
 
         // Keyboard input
+        ui.request_ime(text_edit.node_ref);
+
         for key in ui.input().keys_pressed.clone() {
             if let Some(text) = key.text {
                 if ui.input().key_down(Key::COMMAND) && text.to_lowercase() == "v" {
@@ -153,6 +155,14 @@ pub fn text_edit(ui: &mut UI, text: &mut String) {
                     memory.editor.action(font_system(ui), cosmic_text::Action::Delete);
                 },
                 _ => {}
+            }
+        }
+        if !ui.input().ime_preedit.is_empty() {
+            memory.editor.delete_selection();
+        }
+        if let Some(ime_commit_text) = ui.input().ime_commit.clone() {
+            for char in ime_commit_text.chars() {
+                memory.editor.action(font_system(ui), cosmic_text::Action::Insert(char));
             }
         }
 

@@ -77,7 +77,12 @@ pub(crate) struct RawInput {
     /// What keys were pressed this frame?
     pub(crate) keys_pressed: Vec<Key>,
     /// What keys were released this frame?
-    pub(crate) keys_released: Vec<Key>
+    pub(crate) keys_released: Vec<Key>,
+
+    /// What is the current IME preedit?
+    pub(crate) ime_preedit: String,
+    /// What IME text input was commited this frame?
+    pub(crate) ime_commit: Option<String>
 }
 
 impl RawInput {
@@ -89,7 +94,9 @@ impl RawInput {
             r_mouse_down: false,
             scroll: Vec2::ZERO,
             keys_pressed: Vec::new(),
-            keys_released: Vec::new()
+            keys_released: Vec::new(),
+            ime_preedit: String::new(),
+            ime_commit: None
         }
     }
 
@@ -168,7 +175,10 @@ pub struct Input {
 
     keys: HashMap<Key, ButtonInput>,
     pub keys_pressed: Vec<Key>,
-    pub keys_released: Vec<Key>
+    pub keys_released: Vec<Key>,
+
+    pub ime_preedit: String,
+    pub ime_commit: Option<String>
 }
 
 /// The memory storing what inputs are provided to a node
@@ -282,7 +292,9 @@ impl Input {
             scroll: Vec2::ZERO,
             keys: HashMap::new(),
             keys_pressed: Vec::new(),
-            keys_released: Vec::new()
+            keys_released: Vec::new(),
+            ime_preedit: String::new(),
+            ime_commit: None
         }
     }
 
@@ -313,10 +325,12 @@ impl Input {
         for key in self.keys_released.clone() {
             self.key_state_mut(&key).release();
         }
-
         for (_key, state) in self.keys.iter_mut() {
             state.tick_with_same_state();
         }
+
+        self.ime_preedit = raw_input.ime_preedit.clone();
+        self.ime_commit = std::mem::replace(&mut raw_input.ime_commit, None);
 
         self.l_mouse.released() || self.r_mouse.released() || !self.keys_released.is_empty()
 

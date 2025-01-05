@@ -44,7 +44,8 @@ pub struct UI<'a, 'b> {
 
     // communication
     pub(crate) request_redraw: bool,
-    pub(crate) cursor: CursorIcon
+    pub(crate) cursor: CursorIcon,
+    pub(crate) request_ime: Option<UIRef>
 }
 
 impl<'a, 'b> UI<'a, 'b> {
@@ -61,7 +62,8 @@ impl<'a, 'b> UI<'a, 'b> {
             parent_stack: vec![layer],
             curr_sibling: UIRef::Null,
             request_redraw: false,
-            cursor: CursorIcon::default()
+            cursor: CursorIcon::default(),
+            request_ime: None
         }
     }
 
@@ -210,6 +212,10 @@ impl<'a, 'b> UI<'a, 'b> {
 
     pub fn set_cursor(&mut self, cursor: CursorIcon) {
         self.cursor = cursor;
+    }
+
+    pub fn request_ime(&mut self, node: UIRef) {
+        self.request_ime = Some(node);
     }
 
     /// Get the WebGPU render device

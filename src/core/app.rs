@@ -1,14 +1,11 @@
 
 use winit::{
-    application::ApplicationHandler,
-    event::*,
-    event_loop::{ActiveEventLoop, ControlFlow, EventLoop},
-    window::WindowId,
+    application::ApplicationHandler, dpi::{LogicalPosition, LogicalSize, Position, Size}, event::*, event_loop::{ActiveEventLoop, ControlFlow, EventLoop}, window::WindowId
 };
 
 use crate::{vec2, Input, Memory, Painter, RawInput, Rect, RenderResources, UITree, Vec2, WindowConfig, UI};
 
-use super::{CursorIcon, Key, LogicalKey, TextRenderCache};
+use super::{CursorIcon, Key, LayoutMemory, LogicalKey, TextRenderCache};
 
 pub trait App {
 
@@ -48,8 +45,11 @@ impl<T: App> AppHandler<'_, T> {
         // ui generation
         let mut ui = UI::new(input, memory, render_resources, clipboard, size, tree, layer);
         app.tick(&mut ui);
+
         let cursor = ui.cursor;
         let request_redraw = ui.request_redraw; 
+        let request_ime = ui.request_ime;
+
         let mut tree = ui.tree();
         if request_redraw {
             render_resources.request_redraw();
@@ -62,7 +62,6 @@ impl<T: App> AppHandler<'_, T> {
         tree.remember_layout(memory);
 
         // ui rendering
-        render_resources.window.set_cursor(pierro_to_winit_cursor(cursor));
         let Ok(output) = render_resources.surface.get_current_texture() else { return; }; 
         let view = output.texture.create_view(&wgpu::TextureViewDescriptor::default());
         render_resources.begin_frame(size);
@@ -95,6 +94,17 @@ impl<T: App> AppHandler<'_, T> {
 
         render_resources.queue.submit([encoder.finish()]);
         output.present();
+
+        // other ui output
+        render_resources.window.set_cursor(pierro_to_winit_cursor(cursor));
+        render_resources.window.set_ime_allowed(request_ime.is_some()); 
+        if let Some(ime_node) = request_ime {
+            let id = tree.get(ime_node).id;
+            let rect = memory.get::<LayoutMemory>(id).screen_rect;
+            let logical_position = Position::Logical(LogicalPosition::new(rect.left() as f64, rect.top() as f64));
+            let logical_size = Size::Logical(LogicalSize::new(rect.width() as f64, rect.height() as f64));
+            render_resources.window.set_ime_cursor_area(logical_position, logical_size);
+        }
 
     }
 
@@ -259,6 +269,13 @@ impl<T: App> ApplicationHandler for AppHandler<'_, T> {
                         self.raw_input.keys_released.push(key);
                     }
                 }
+            },
+
+            WindowEvent::Ime(Ime::Preedit(preedit, _)) => {
+                self.raw_input.ime_preedit = preedit;
+            },
+            WindowEvent::Ime(Ime::Commit(text)) => {
+                self.raw_input.ime_commit = Some(text);
             },
 
             WindowEvent::CloseRequested => {
