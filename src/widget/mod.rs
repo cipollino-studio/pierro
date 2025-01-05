@@ -35,6 +35,9 @@ pub use text_edit::*;
 mod context_menu;
 pub use context_menu::*;
 
+mod collapsing_header;
+pub use collapsing_header::*;
+
 mod menu;
 pub use menu::*;
 

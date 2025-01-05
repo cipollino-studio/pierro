@@ -30,6 +30,12 @@ impl Basic {
         pierro::context_menu(ui, &context_menu_response, |ui| {
             pierro::label(ui, "Inside the context menu");
         });
+
+        pierro::collapsing_header(ui, "A collapsing header", |ui| {
+            for i in 0..50 {
+                pierro::label(ui, i.to_string());
+            }
+        });
     }
 
 }

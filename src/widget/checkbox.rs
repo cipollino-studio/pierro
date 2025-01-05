@@ -22,5 +22,5 @@ pub fn checkbox_labeled<S: Into<String>>(ui: &mut UI, label_text: S, value: &mut
         h_spacing(ui, 5.0);
         label(ui, label_text);
         response
-    })
+    }).1
 }
