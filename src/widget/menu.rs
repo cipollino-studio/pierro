@@ -1,5 +1,5 @@
 
-use crate::{icons, vec2, Color, Id, Layout, LayoutInfo, Margin, Response, Size, UINodeParams, UI};
+use crate::{icons, vec2, Color, Id, Layout, LayoutInfo, Margin, PerAxis, Response, Size, UINodeParams, UI};
 
 use super::{close_context_menu, h_line, horizontal, icon, is_context_menu_open, label, label_text_style, open_context_menu, render_context_menu, Theme};
 
@@ -48,7 +48,7 @@ pub fn menu_bar_item<S: Into<String>, F: FnOnce(&mut UI)>(ui: &mut UI, label: S,
     if open_menu_id != Some(response.id) && (response.mouse_pressed() || (response.hovered && open_menu_id.is_some())) {
         let button_rect = ui.memory().get::<LayoutInfo>(response.id).screen_rect;
         let position = button_rect.bl();
-        open_context_menu(ui, response.id, position);
+        open_context_menu(ui, response.id, position, PerAxis::splat(None));
 
         if let Some(open_menu_id) = open_menu_id {
             close_context_menu(ui, open_menu_id);
@@ -116,7 +116,7 @@ pub fn menu_category<S: Into<String>, F: FnOnce(&mut UI)>(ui: &mut UI, label_tex
         let button_rect = ui.memory().get::<LayoutInfo>(response.id).screen_rect;
         let parent_rect = ui.memory().get::<LayoutInfo>(parent_id).screen_rect;
         let position = vec2(parent_rect.right() - stroke_width, button_rect.top()); 
-        open_context_menu(ui, response.id, position);
+        open_context_menu(ui, response.id, position, PerAxis::splat(None));
 
         if let Some(open_menu_id) = open_menu_id {
             close_context_menu(ui, open_menu_id);

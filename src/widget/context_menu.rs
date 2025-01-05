@@ -1,10 +1,11 @@
 
-use crate::{Id, LayoutInfo, Margin, Response, Size, TSTransform, UINodeParams, Vec2, UI};
+use crate::{Id, LayoutInfo, Margin, PerAxis, Response, Size, TSTransform, UINodeParams, Vec2, UI};
 
 use super::Theme;
 
 struct ContextMenuMemory {
-    position: Vec2
+    position: Vec2,
+    size: PerAxis<Option<f32>> 
 }
 
 pub fn context_menu<F: FnOnce(&mut UI)>(ui: &mut UI, response: &Response, body: F) {
@@ -12,7 +13,7 @@ pub fn context_menu<F: FnOnce(&mut UI)>(ui: &mut UI, response: &Response, body: 
 
     if response.right_mouse_released() {
         let position = ui.input().mouse_pos.unwrap_or(Vec2::ZERO);
-        open_context_menu(ui, response.id, position);        
+        open_context_menu(ui, response.id, position, PerAxis::splat(None));        
     }
 
     render_context_menu(ui, response.id, body);
@@ -23,15 +24,16 @@ pub fn left_click_context_menu<F: FnOnce(&mut UI)>(ui: &mut UI, response: &Respo
 
     if response.mouse_released() {
         let position = ui.input().mouse_pos.unwrap_or(Vec2::ZERO);
-        open_context_menu(ui, response.id, position);        
+        open_context_menu(ui, response.id, position, PerAxis::splat(None));        
     }
 
     render_context_menu(ui, response.id, body);
 }
 
-pub fn open_context_menu(ui: &mut UI, id: Id, position: Vec2) {
+pub fn open_context_menu(ui: &mut UI, id: Id, position: Vec2, size: PerAxis<Option<f32>>) {
     ui.memory().insert(id, ContextMenuMemory {
-        position
+        position,
+        size
     });
 }
 
@@ -45,15 +47,19 @@ pub fn is_context_menu_open(ui: &mut UI, id: Id) -> bool {
 
 pub fn render_context_menu<F: FnOnce(&mut UI)>(ui: &mut UI, id: Id, body: F) {
     if let Some(context_menu_memory) = ui.memory().get_opt::<ContextMenuMemory>(id) {
-        let position = context_menu_memory.position;    
+        let position = context_menu_memory.position;
+        let size = context_menu_memory.size;
         let theme = ui.style::<Theme>();
         let fill = theme.bg_light;
         let stroke = theme.widget_stroke();
         let margin = theme.widget_margin;
 
+        let width = size.x.map(|size| Size::px(size - 2.0 * margin)).unwrap_or(Size::fit());
+        let height = size.y.map(|size| Size::px(size - 2.0 * margin)).unwrap_or(Size::fit());
+
         let (layer, menu) = ui.layer(|ui| {
             let (menu, _) = ui.with_node(
-                UINodeParams::new(Size::fit(), Size::fit())
+                UINodeParams::new(width, height)
                     .with_fill(fill)
                     .with_stroke(stroke)
                     .with_margin(Margin::same(margin)),

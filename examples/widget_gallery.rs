@@ -1,5 +1,3 @@
-use pierro::UINodeParams;
-
 
 struct Gallery {
     docking_state: pierro::DockingState<GalleryTab>
@@ -7,7 +5,8 @@ struct Gallery {
 
 struct Basic {
     text_edit_text: String,
-    checkbox_state: bool
+    checkbox_state: bool,
+    dropdown_state: String
 }
 
 impl Basic {
@@ -16,6 +15,7 @@ impl Basic {
         Self {
             text_edit_text: "A text edit box".to_owned(),
             checkbox_state: true,
+            dropdown_state: "Option A".to_owned()
         }
     }
 
@@ -39,6 +39,14 @@ impl Basic {
                     pierro::label(ui, i.to_string());
                 }
             });
+
+            pierro::dropdown(ui, self.dropdown_state.clone(), |ui| {
+                for option in ["Option A", "Option B", "Option C"] {
+                    if pierro::menu_button(ui, option).mouse_released() {
+                        self.dropdown_state = option.to_owned();
+                    }
+                }
+            });
         });
     }
 
@@ -58,7 +66,7 @@ impl Layout {
 
     fn node(&self, ui: &mut pierro::UI, color: pierro::Color) {
         ui.node(
-            UINodeParams::new(pierro::Size::px(100.0), pierro::Size::px(100.0))
+            pierro::UINodeParams::new(pierro::Size::px(100.0), pierro::Size::px(100.0))
                 .with_fill(color)
         );
     }
