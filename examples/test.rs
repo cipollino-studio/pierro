@@ -26,10 +26,10 @@ impl pierro::App for TestApp {
 
             pierro::menu_bar(ui, |ui| {
                 pierro::menu_bar_item(ui, "File", |ui| {
-                    if pierro::menu_button(ui, "New").mouse_released() {
+                    if pierro::menu_button(ui, "New").mouse_clicked() {
                         println!("New!!");
                     }
-                    if pierro::menu_button(ui, "Open").mouse_released() {
+                    if pierro::menu_button(ui, "Open").mouse_clicked() {
                         println!("Open!!");
                     }
                     pierro::menu_category(ui, "Recent", |ui| {
@@ -43,12 +43,12 @@ impl pierro::App for TestApp {
                         });
                     });
                     pierro::h_line(ui);
-                    pierro::menu_button(ui, "XYZ").mouse_released();
-                    pierro::menu_button(ui, "PQR").mouse_released();
+                    pierro::menu_button(ui, "XYZ").mouse_clicked();
+                    pierro::menu_button(ui, "PQR").mouse_clicked();
                 });
                 pierro::menu_bar_item(ui, "Edit", |ui| {
-                    pierro::menu_button(ui, "Undo").mouse_released();
-                    pierro::menu_button(ui, "Redo").mouse_released();
+                    pierro::menu_button(ui, "Undo").mouse_clicked();
+                    pierro::menu_button(ui, "Redo").mouse_clicked();
                 });
             });
 
@@ -68,10 +68,10 @@ impl pierro::App for TestApp {
             }
 
             pierro::horizontal(ui, |ui| {
-                if pierro::button(ui, "+").mouse_released() {
+                if pierro::button(ui, "+").mouse_clicked() {
                     self.zoom *= 1.25;
                 }
-                if pierro::button(ui, "-").mouse_released() {
+                if pierro::button(ui, "-").mouse_clicked() {
                     self.zoom /= 1.25;
                 }
                 
@@ -87,12 +87,12 @@ impl pierro::App for TestApp {
             pierro::scroll_area(ui, |ui| {
 
                 pierro::label(ui, "Button #1: 🍊");
-                if pierro::button(ui, "So long mom, I'm off to drop the bomb").mouse_released() {
+                if pierro::button(ui, "So long mom, I'm off to drop the bomb").mouse_clicked() {
                     self.n += 1;
                 }
 
                 pierro::label(ui, "Button #2:");
-                if pierro::button(ui, "So long mom, I'm off to drop the bomb").mouse_released() {
+                if pierro::button(ui, "So long mom, I'm off to drop the bomb").mouse_clicked() {
                     self.n -= 1;
                 }
 

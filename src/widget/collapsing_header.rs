@@ -34,7 +34,7 @@ pub fn collapsing_header<S: Into<String>, F: FnOnce(&mut UI)>(ui: &mut UI, label
         });
         ui.set_sense_mouse(header_response.node_ref, true);
 
-        if header_response.mouse_released() {
+        if header_response.mouse_clicked() {
             let memory = ui.memory().get::<CollapsingHeaderMemory>(container.id);    
             memory.open = !memory.open;
         }

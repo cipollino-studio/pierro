@@ -10,7 +10,7 @@ pub fn checkbox(ui: &mut UI, value: &mut bool) -> Response {
     }
     let response = button_with_text_style(ui, icons::CHECK, text_style);
     ui.set_margin(response.node_ref, Margin::ZERO);
-    if response.mouse_released() {
+    if response.mouse_clicked() {
         *value = !*value;
     }
     response

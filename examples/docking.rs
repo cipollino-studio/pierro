@@ -13,19 +13,19 @@ impl pierro::DockingTab for DockingTab {
 
     fn render(&mut self, ui: &mut pierro::UI) {
         pierro::label(ui, format!("{}: {}", self.text, self.n));
-        if pierro::button(ui, "Add 100!").mouse_released() {
+        if pierro::button(ui, "Add 100!").mouse_clicked() {
             self.n += 100;
         }
     }
     
     fn add_tab_dropdown<F: FnMut(Self)>(ui: &mut pierro::UI, mut add_tab: F) {
-        if pierro::menu_button(ui, "Hey").mouse_released() {
+        if pierro::menu_button(ui, "Hey").mouse_clicked() {
             add_tab(Self {
                 text: "Hey",
                 n: 0,
             });
         }
-        if pierro::menu_button(ui, "Goodbye").mouse_released() {
+        if pierro::menu_button(ui, "Goodbye").mouse_clicked() {
             add_tab(Self {
                 text: "Goodbye",
                 n: 123,

@@ -37,7 +37,7 @@ pub fn dropdown<S: Into<String>, F: FnOnce(&mut UI)>(ui: &mut UI, dropdown_text:
     if is_context_menu_open(ui, response.id) && (ui.input().l_mouse.released() || ui.input().r_mouse.released()) {
         close_context_menu(ui, response.id);
     }
-    if response.mouse_released() {
+    if response.mouse_clicked() {
         let rect = ui.memory().get::<LayoutInfo>(response.id).screen_rect;
         open_context_menu(ui, response.id, rect.bl(), PerAxis::new(Some(rect.width()), None));
     }

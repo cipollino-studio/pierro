@@ -19,12 +19,14 @@ pub trait App {
 
 struct AppHandler<'a, T: App> {
     app: T,
+
     render_resources: Option<RenderResources<'a>>,
     clipboard: Option<arboard::Clipboard>,
     raw_input: RawInput,
     input: Input,
     memory: Memory,
 
+    prev_redraw_time: std::time::Instant,
     redraw_counter: i32
 }
 
@@ -231,6 +233,9 @@ impl<T: App> ApplicationHandler for AppHandler<'_, T> {
                 render_resources.resize(new_size);
             },
             WindowEvent::RedrawRequested => {
+                let delta_time = self.prev_redraw_time.elapsed().as_secs_f32();
+                self.prev_redraw_time = std::time::Instant::now();
+                self.raw_input.delta_time = delta_time;
                 Self::tick(&mut self.app, render_resources, self.clipboard.as_mut(), &mut self.raw_input, &mut self.input, &mut self.memory);
                 if self.redraw_counter > 0 {
                     self.redraw_counter -= 1;
@@ -304,6 +309,7 @@ pub fn run<T: App>(app: T) {
         raw_input: RawInput::new(),
         input: Input::new(),
         memory: Memory::new(),
+        prev_redraw_time: std::time::Instant::now(),
         redraw_counter: 0
     }).unwrap();
 

@@ -13,7 +13,11 @@ pub use key::*;
 #[derive(Clone, Copy)]
 pub struct ButtonInput {
     state: bool,
-    prev_state: bool
+    prev_state: bool,
+    clicked: bool,
+    time_since_press: f32,
+    time_since_release: f32,
+    click_count: u32
 }
 
 impl ButtonInput {
@@ -22,13 +26,38 @@ impl ButtonInput {
         Self {
             state: false,
             prev_state: false,
+            clicked: false,
+            time_since_press: 0.0,
+            time_since_release: 0.0,
+            click_count: 0
+        }
+    }
+
+    fn timer_tick(&mut self, delta_time: f32) {
+        self.time_since_press += delta_time;
+        self.time_since_release += delta_time;
+        if self.pressed() {
+            self.time_since_press = 0.0;
+        }
+        if self.released() {
+            self.clicked = self.time_since_press < 1.0;
+            if self.time_since_release > 0.3 {
+                self.click_count = 0;
+            }
+            if self.clicked {
+                self.click_count += 1;
+            }
+            self.time_since_release = 0.0;
+        } else {
+            self.clicked = false;
         }
     }
 
     /// Update the button with a new state
-    pub fn tick(&mut self, state: bool) {
+    pub fn tick(&mut self, state: bool, delta_time: f32) {
         self.prev_state = self.state;
         self.state = state;
+        self.timer_tick(delta_time);
     } 
 
     /// Set the button to be down 
@@ -42,8 +71,9 @@ impl ButtonInput {
     }
 
     /// Update the button without providing a new state
-    pub fn tick_with_same_state(&mut self) {
+    pub fn tick_with_same_state(&mut self, delta_time: f32) {
         self.prev_state = self.state;
+        self.timer_tick(delta_time);
     }
 
     /// Is the button down?
@@ -60,11 +90,43 @@ impl ButtonInput {
     pub fn released(&self) -> bool {
         !self.state && self.prev_state
     }
-    
+
+    pub fn click_count(&self) -> u32 {
+        if self.clicked {
+            self.click_count
+        } else {
+            0
+        }
+    }
+
+    /// Was the button clicked?
+    pub fn clicked(&self) -> bool {
+        self.clicked
+    }
+
+    /// Was the button clicked once?
+    pub fn single_clicked(&self) -> bool {
+        self.click_count() == 1
+    }
+
+    /// Was the button double clicked?
+    pub fn double_clicked(&self) -> bool {
+        self.click_count() == 2
+    }
+
+    /// Was the button triple clicked?
+    pub fn triple_clicked(&self) -> bool {
+        self.click_count() == 3
+    }
+
 }
 
 /// The raw input given to the application by the windowing library
 pub(crate) struct RawInput {
+
+    /// The amount of time elapsed since the last redraw
+    pub(crate) delta_time: f32,
+
     /// Mouse position in physical pixels. None if the mouse left the window
     pub(crate) mouse_pos: Option<Vec2>,
     /// Is the left mouse button currently down?
@@ -89,6 +151,7 @@ impl RawInput {
 
     pub(crate) fn new() -> Self {
         Self {
+            delta_time: 0.0,
             mouse_pos: None,
             l_mouse_down: false,
             r_mouse_down: false,
@@ -123,9 +186,9 @@ impl MouseButton {
         }
     }
 
-    fn update(&mut self, down: bool, mouse_pos: Option<Vec2>) {
-        self.state.tick(down);
-        self.dragging.tick_with_same_state();
+    fn update(&mut self, down: bool, mouse_pos: Option<Vec2>, delta_time: f32) {
+        self.state.tick(down, delta_time);
+        self.dragging.tick_with_same_state(delta_time);
         if self.state.pressed() {
             self.press_pos = mouse_pos;
         }
@@ -150,6 +213,18 @@ impl MouseButton {
 
     pub fn released(&self) -> bool {
         self.state.released()
+    }
+
+    pub fn clicked(&self) -> bool {
+        self.state.clicked()
+    }
+
+    pub fn double_clicked(&self) -> bool {
+        self.state.double_clicked()
+    }
+
+    pub fn triple_clicked(&self) -> bool {
+        self.state.triple_clicked()
     }
 
     pub fn dragging(&self) -> bool {
@@ -304,8 +379,8 @@ impl Input {
         self.prev_mouse_pos = self.mouse_pos;
         self.mouse_pos = raw_input.mouse_pos.map(|pos| pos / scale_factor);
 
-        self.l_mouse.update(raw_input.l_mouse_down, self.mouse_pos);
-        self.r_mouse.update(raw_input.r_mouse_down, self.mouse_pos);
+        self.l_mouse.update(raw_input.l_mouse_down, self.mouse_pos, raw_input.delta_time);
+        self.r_mouse.update(raw_input.r_mouse_down, self.mouse_pos, raw_input.delta_time);
 
         // If we start dragging, set the mouse position to the previous mouse position
         // so that the drag starting is registered on the same widget where the mouse began
@@ -325,7 +400,7 @@ impl Input {
             self.key_state_mut(&key).release();
         }
         for (_key, state) in self.keys.iter_mut() {
-            state.tick_with_same_state();
+            state.tick_with_same_state(raw_input.delta_time);
         }
 
         self.ime_preedit = raw_input.ime_preedit.clone();
@@ -422,6 +497,18 @@ impl Response {
         self.l_mouse.released()
     }
 
+    pub fn mouse_clicked(&self) -> bool {
+        self.l_mouse.clicked()
+    }
+
+    pub fn mouse_double_clicked(&self) -> bool {
+        self.l_mouse.double_clicked()
+    }
+
+    pub fn mouse_triple_clicked(&self) -> bool {
+        self.l_mouse.triple_clicked()
+    }
+
     pub fn dragging(&self) -> bool {
         self.l_mouse.dragging()
     }
@@ -452,6 +539,18 @@ impl Response {
 
     pub fn right_mouse_released(&self) -> bool {
         self.r_mouse.released()
+    }
+
+    pub fn right_mouse_clicked(&self) -> bool {
+        self.r_mouse.clicked()
+    }
+
+    pub fn right_mouse_double_clicked(&self) -> bool {
+        self.r_mouse.double_clicked()
+    }
+
+    pub fn right_mouse_triple_clicked(&self) -> bool {
+        self.r_mouse.triple_clicked()
     }
 
     pub fn right_dragging(&self) -> bool {

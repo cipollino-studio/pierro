@@ -184,9 +184,9 @@ pub fn text_edit(ui: &mut UI, text: &mut String) {
         let scroll = memory.scroll;
 
         // Mouse interactions
-        if text_edit.mouse_pressed() {
-            if let Some(mouse_pos) = text_edit.mouse_pos(ui) {
-                let mouse_pos = mouse_pos - Vec2::splat(widget_margin);
+        if let Some(mouse_pos) = text_edit.mouse_pos(ui) {
+            let mouse_pos = mouse_pos - Vec2::splat(widget_margin);
+            if text_edit.mouse_pressed() {
                 if !ui.input().key_down(Key::SHIFT) {
                     memory.editor.set_selection(cosmic_text::Selection::None);
                     memory.editor.action(font_system(ui), cosmic_text::Action::Click { x: (mouse_pos.x + scroll) as i32, y: mouse_pos.y as i32 });
@@ -194,11 +194,14 @@ pub fn text_edit(ui: &mut UI, text: &mut String) {
                     memory.editor.action(font_system(ui), cosmic_text::Action::Drag { x: (mouse_pos.x + scroll) as i32, y: mouse_pos.y as i32 });
                 }
             }
-        }
-        if text_edit.dragging() {
-            if let Some(mouse_pos) = text_edit.mouse_pos(ui) {
-                let mouse_pos = mouse_pos - Vec2::splat(widget_margin);
+            if text_edit.dragging() {
                 memory.editor.action(font_system(ui), cosmic_text::Action::Drag { x: (mouse_pos.x + scroll) as i32, y: mouse_pos.y as i32 });
+            }
+            if text_edit.mouse_double_clicked() {
+                memory.editor.action(font_system(ui), cosmic_text::Action::DoubleClick { x: (mouse_pos.x + scroll) as i32, y: mouse_pos.y as i32 });
+            }
+            if text_edit.mouse_triple_clicked() {
+                memory.editor.action(font_system(ui), cosmic_text::Action::TripleClick { x: (mouse_pos.x + scroll) as i32, y: mouse_pos.y as i32 });
             }
         }
 

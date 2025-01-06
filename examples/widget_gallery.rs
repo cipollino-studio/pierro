@@ -42,7 +42,7 @@ impl Basic {
 
             pierro::dropdown(ui, self.dropdown_state.clone(), |ui| {
                 for option in ["Option A", "Option B", "Option C"] {
-                    if pierro::menu_button(ui, option).mouse_released() {
+                    if pierro::menu_button(ui, option).mouse_clicked() {
                         self.dropdown_state = option.to_owned();
                     }
                 }
@@ -81,10 +81,10 @@ impl Layout {
             pierro::Axis::X => "X",
             pierro::Axis::Y => "Y",
         }, |ui| {
-            if pierro::menu_button(ui, "X").mouse_released() {
+            if pierro::menu_button(ui, "X").mouse_clicked() {
                 self.axis = pierro::Axis::X;
             }
-            if pierro::menu_button(ui, "Y").mouse_released() {
+            if pierro::menu_button(ui, "Y").mouse_clicked() {
                 self.axis = pierro::Axis::Y;
             }
         });
@@ -94,13 +94,13 @@ impl Layout {
             pierro::Justify::Center => "Center",
             pierro::Justify::Max => "Max",
         }, |ui| {
-            if pierro::menu_button(ui, "Min").mouse_released() {
+            if pierro::menu_button(ui, "Min").mouse_clicked() {
                 self.justify = pierro::Justify::Min;
             }
-            if pierro::menu_button(ui, "Center").mouse_released() {
+            if pierro::menu_button(ui, "Center").mouse_clicked() {
                 self.justify = pierro::Justify::Center;
             }
-            if pierro::menu_button(ui, "Max").mouse_released() {
+            if pierro::menu_button(ui, "Max").mouse_clicked() {
                 self.justify = pierro::Justify::Max;
             }
         });
@@ -110,13 +110,13 @@ impl Layout {
             pierro::Align::Center => "Center",
             pierro::Align::Max => "Max",
         }, |ui| {
-            if pierro::menu_button(ui, "Min").mouse_released() {
+            if pierro::menu_button(ui, "Min").mouse_clicked() {
                 self.align = pierro::Align::Min;
             }
-            if pierro::menu_button(ui, "Center").mouse_released() {
+            if pierro::menu_button(ui, "Center").mouse_clicked() {
                 self.align = pierro::Align::Center;
             }
-            if pierro::menu_button(ui, "Max").mouse_released() {
+            if pierro::menu_button(ui, "Max").mouse_clicked() {
                 self.align = pierro::Align::Max;
             }
         });
@@ -157,10 +157,10 @@ impl pierro::DockingTab for GalleryTab {
     }
 
     fn add_tab_dropdown<F: FnMut(Self)>(ui: &mut pierro::UI, mut add_tab: F) {
-        if pierro::menu_button(ui, "Basic Widgets").mouse_released() {
+        if pierro::menu_button(ui, "Basic Widgets").mouse_clicked() {
             add_tab(Self::Basic(Basic::new()));
         }
-        if pierro::menu_button(ui, "Layout").mouse_released() {
+        if pierro::menu_button(ui, "Layout").mouse_clicked() {
             add_tab(Self::Layout(Layout::new()));
         }
     }
