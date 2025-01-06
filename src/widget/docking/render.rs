@@ -17,7 +17,7 @@ impl<Tab: DockingTab> Tabs<Tab> {
             ui.set_sense_mouse(tab_response.tab.node_ref, false);
             tab_response.tab
         });
-        if dnd_response.mouse_released() {
+        if dnd_response.mouse_released() && !dnd_response.drag_stopped() {
             self.active_tab = tab_idx;
         }
         button_fill_animation(ui, tab_response.node_ref, &dnd_response, base_color); 
