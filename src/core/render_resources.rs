@@ -2,7 +2,7 @@
 use std::sync::Arc;
 
 use winit::{
-    dpi::{LogicalSize, PhysicalSize, Size}, event_loop::ActiveEventLoop, window::{Window, WindowAttributes}
+    dpi::{LogicalSize, PhysicalSize, Size}, event_loop::ActiveEventLoop, window::{Icon, Window, WindowAttributes}
 };
 
 use crate::{text::TextResources, PainterResources, WindowConfig};
@@ -28,8 +28,11 @@ impl RenderResources<'_> {
 
     pub(crate) async fn new(event_loop: &ActiveEventLoop, config: WindowConfig) -> Option<Self> {
 
+        let icon = Icon::from_rgba(config.icon.rgba, config.icon.width, config.icon.height).ok();
+
         let window_attributes = WindowAttributes::default()
             .with_min_inner_size(Size::Logical(LogicalSize::new(config.min_size.x as f64, config.min_size.y as f64)))
+            .with_window_icon(icon)
             .with_title(config.title);
         let window = Arc::new(event_loop.create_window(window_attributes).ok()?);
         let size = window.inner_size();
