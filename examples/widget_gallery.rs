@@ -21,31 +21,40 @@ impl Basic {
 
     fn ui(&mut self, ui: &mut pierro::UI) {
         pierro::scroll_area(ui, |ui| {
-            pierro::label(ui, "A label");
+            pierro::margin(ui, |ui| { 
+                pierro::label(ui, "A label");
+                pierro::v_spacing(ui, 10.0);
 
-            pierro::button(ui, "A button");
+                pierro::button(ui, "A button");
+                pierro::v_spacing(ui, 10.0);
 
-            pierro::text_edit(ui, &mut self.text_edit_text);
+                pierro::text_edit(ui, &mut self.text_edit_text);
+                pierro::v_spacing(ui, 10.0);
 
-            pierro::checkbox_labeled(ui, "A checkbox", &mut self.checkbox_state);
+                pierro::checkbox_labeled(ui, "A checkbox", &mut self.checkbox_state);
+                pierro::v_spacing(ui, 10.0);
 
-            let context_menu_response = pierro::label(ui, "Context menu (right click me!)");
-            pierro::context_menu(ui, &context_menu_response, |ui| {
-                pierro::label(ui, "Inside the context menu");
-            });
+                let context_menu_response = pierro::label(ui, "Context menu (right click me!)");
+                pierro::context_menu(ui, &context_menu_response, |ui| {
+                    pierro::label(ui, "Inside the context menu");
+                });
+                pierro::v_spacing(ui, 10.0);
 
-            pierro::collapsing_header(ui, "A collapsing header", |ui| {
-                for i in 0..50 {
-                    pierro::label(ui, i.to_string());
-                }
-            });
-
-            pierro::dropdown(ui, self.dropdown_state.clone(), |ui| {
-                for option in ["Option A", "Option B", "Option C"] {
-                    if pierro::menu_button(ui, option).mouse_clicked() {
-                        self.dropdown_state = option.to_owned();
+                pierro::collapsing_header(ui, "A collapsing header", |ui| {
+                    for i in 0..50 {
+                        pierro::label(ui, i.to_string());
                     }
-                }
+                });
+                pierro::v_spacing(ui, 10.0);
+
+                pierro::dropdown(ui, self.dropdown_state.clone(), |ui| {
+                    for option in ["Option A", "Option B", "Option C"] {
+                        if pierro::menu_button(ui, option).mouse_clicked() {
+                            self.dropdown_state = option.to_owned();
+                        }
+                    }
+                });
+
             });
         });
     }
@@ -77,48 +86,52 @@ impl Layout {
 
     fn ui(&mut self, ui: &mut pierro::UI) {
 
-        pierro::dropdown_labeled(ui, "Axis: ", match self.axis {
-            pierro::Axis::X => "X",
-            pierro::Axis::Y => "Y",
-        }, |ui| {
-            if pierro::menu_button(ui, "X").mouse_clicked() {
-                self.axis = pierro::Axis::X;
-            }
-            if pierro::menu_button(ui, "Y").mouse_clicked() {
-                self.axis = pierro::Axis::Y;
-            }
-        });
+        pierro::margin(ui, |ui| {
+            pierro::dropdown_labeled(ui, "Axis: ", match self.axis {
+                pierro::Axis::X => "X",
+                pierro::Axis::Y => "Y",
+            }, |ui| {
+                if pierro::menu_button(ui, "X").mouse_clicked() {
+                    self.axis = pierro::Axis::X;
+                }
+                if pierro::menu_button(ui, "Y").mouse_clicked() {
+                    self.axis = pierro::Axis::Y;
+                }
+            });
+            pierro::v_spacing(ui, 5.0);
 
-        pierro::dropdown_labeled(ui, "Justify: ", match self.justify {
-            pierro::Justify::Min => "Min",
-            pierro::Justify::Center => "Center",
-            pierro::Justify::Max => "Max",
-        }, |ui| {
-            if pierro::menu_button(ui, "Min").mouse_clicked() {
-                self.justify = pierro::Justify::Min;
-            }
-            if pierro::menu_button(ui, "Center").mouse_clicked() {
-                self.justify = pierro::Justify::Center;
-            }
-            if pierro::menu_button(ui, "Max").mouse_clicked() {
-                self.justify = pierro::Justify::Max;
-            }
-        });
+            pierro::dropdown_labeled(ui, "Justify: ", match self.justify {
+                pierro::Justify::Min => "Min",
+                pierro::Justify::Center => "Center",
+                pierro::Justify::Max => "Max",
+            }, |ui| {
+                if pierro::menu_button(ui, "Min").mouse_clicked() {
+                    self.justify = pierro::Justify::Min;
+                }
+                if pierro::menu_button(ui, "Center").mouse_clicked() {
+                    self.justify = pierro::Justify::Center;
+                }
+                if pierro::menu_button(ui, "Max").mouse_clicked() {
+                    self.justify = pierro::Justify::Max;
+                }
+            });
+            pierro::v_spacing(ui, 5.0);
 
-        pierro::dropdown_labeled(ui, "Align: ", match self.align {
-            pierro::Align::Min => "Min",
-            pierro::Align::Center => "Center",
-            pierro::Align::Max => "Max",
-        }, |ui| {
-            if pierro::menu_button(ui, "Min").mouse_clicked() {
-                self.align = pierro::Align::Min;
-            }
-            if pierro::menu_button(ui, "Center").mouse_clicked() {
-                self.align = pierro::Align::Center;
-            }
-            if pierro::menu_button(ui, "Max").mouse_clicked() {
-                self.align = pierro::Align::Max;
-            }
+            pierro::dropdown_labeled(ui, "Align: ", match self.align {
+                pierro::Align::Min => "Min",
+                pierro::Align::Center => "Center",
+                pierro::Align::Max => "Max",
+            }, |ui| {
+                if pierro::menu_button(ui, "Min").mouse_clicked() {
+                    self.align = pierro::Align::Min;
+                }
+                if pierro::menu_button(ui, "Center").mouse_clicked() {
+                    self.align = pierro::Align::Center;
+                }
+                if pierro::menu_button(ui, "Max").mouse_clicked() {
+                    self.align = pierro::Align::Max;
+                }
+            });
         });
 
         pierro::h_divider(ui);

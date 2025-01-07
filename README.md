@@ -1,7 +1,12 @@
 
-# Pierro: A Rust immediate-mode UI library 
+
+![Pierro Logo](media/banner.png)
+
+# Pierro
 
 Pierro is a simple immediate mode GUI library for Rust.
+
+![An example of a pierro app](media/widget_gallery.png)
 
 * [Quick Start](#quick-start)
 * [What is Immediate Mode UI?](#what-is-immediate-mode-ui)
