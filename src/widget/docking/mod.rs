@@ -13,7 +13,7 @@ pub trait DockingTab: Sized {
     fn title(&self) -> String;
     fn render(&mut self, ui: &mut UI, context: &mut Self::Context);
 
-    fn add_tab_dropdown<F: FnMut(Self)>(ui: &mut UI, add_tab: F);
+    fn add_tab_dropdown<F: FnMut(Self)>(ui: &mut UI, add_tab: F, context: &mut Self::Context);
     
 }
 

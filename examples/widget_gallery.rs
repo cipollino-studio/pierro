@@ -171,7 +171,7 @@ impl pierro::DockingTab for GalleryTab {
             }
     }
 
-    fn add_tab_dropdown<F: FnMut(Self)>(ui: &mut pierro::UI, mut add_tab: F) {
+    fn add_tab_dropdown<F: FnMut(Self)>(ui: &mut pierro::UI, mut add_tab: F, _context: &mut ()) {
         if pierro::menu_button(ui, "Basic Widgets").mouse_clicked() {
             add_tab(Self::Basic(Basic::new()));
         }

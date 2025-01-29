@@ -64,7 +64,7 @@ impl<Tab: DockingTab> Tabs<Tab> {
             left_click_context_menu(ui, &add_tab_button, |ui| {
                 Tab::add_tab_dropdown(ui, |tab| {
                     commands.push(DockingCommand::AddTab { tab, to: node_id });
-                }); 
+                }, context);
             });
         });
         
