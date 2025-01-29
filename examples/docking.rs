@@ -7,11 +7,13 @@ struct DockingTab {
 
 impl pierro::DockingTab for DockingTab {
 
+    type Context = ();
+
     fn title(&self) -> String {
         self.text.to_owned()
     }
 
-    fn render(&mut self, ui: &mut pierro::UI) {
+    fn render(&mut self, ui: &mut pierro::UI, _context: &mut ()) {
         pierro::label(ui, format!("{}: {}", self.text, self.n));
         if pierro::button(ui, "Add 100!").mouse_clicked() {
             self.n += 100;
@@ -54,7 +56,7 @@ impl pierro::App for DockingApp {
                 pierro::menu_button(ui, "Here");
             });
         });
-        self.docking_state.render(ui);
+        self.docking_state.render(ui, &mut ());
     }
 
 }

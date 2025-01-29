@@ -8,8 +8,10 @@ use crate::{Axis, UI};
 
 pub trait DockingTab: Sized {
 
+    type Context;
+
     fn title(&self) -> String;
-    fn render(&mut self, ui: &mut UI);
+    fn render(&mut self, ui: &mut UI, context: &mut Self::Context);
 
     fn add_tab_dropdown<F: FnMut(Self)>(ui: &mut UI, add_tab: F);
     

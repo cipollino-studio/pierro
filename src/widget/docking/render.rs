@@ -23,7 +23,7 @@ impl<Tab: DockingTab> Tabs<Tab> {
         button_fill_animation(ui, tab_response.node_ref, &dnd_response, base_color); 
     }
 
-    fn render(&mut self, ui: &mut UI, node_id: DockingNodeId, commands: &mut Vec<DockingCommand<Tab>>) {
+    fn render(&mut self, ui: &mut UI, node_id: DockingNodeId, commands: &mut Vec<DockingCommand<Tab>>, context: &mut Tab::Context) {
 
         let theme = ui.style::<Theme>();
         let window_bg = theme.bg_light;
@@ -132,7 +132,7 @@ impl<Tab: DockingTab> Tabs<Tab> {
         if self.tabs.len() > 0 {
             self.active_tab = self.active_tab.min(self.tabs.len() - 1);
             ui.with_parent(response.node_ref, |ui| {
-                self.tabs[self.active_tab].render(ui);
+                self.tabs[self.active_tab].render(ui, context);
             })
         }
 
@@ -142,11 +142,11 @@ impl<Tab: DockingTab> Tabs<Tab> {
 
 impl<Tab: DockingTab> DockingTree<Tab> {
 
-    fn render_node(&mut self, ui: &mut UI, node_id: DockingNodeId, commands: &mut Vec<DockingCommand<Tab>>) -> Option<()> {
+    fn render_node(&mut self, ui: &mut UI, node_id: DockingNodeId, commands: &mut Vec<DockingCommand<Tab>>, context: &mut Tab::Context) -> Option<()> {
         let node = self.nodes.get_mut(&node_id)?;
         match &mut node.kind {
             DockingNodeKind::Tabs(tabs) => {
-                tabs.render(ui, node_id, commands);
+                tabs.render(ui, node_id, commands, context);
             },
             DockingNodeKind::Split(split) => {
                 let nodes = split.nodes.clone();
@@ -162,7 +162,7 @@ impl<Tab: DockingTab> DockingTree<Tab> {
                         ui.with_node(
                             UINodeParams::new_per_axis(PerAxis::along_across(direction, Size::fr(nodes[i].0), Size::fr(1.0))),
                             |ui| {
-                                self.render_node(ui, nodes[i].1, commands);
+                                self.render_node(ui, nodes[i].1, commands, context);
                             }
                         );
                         if i < nodes.len() - 1 {
@@ -199,10 +199,10 @@ impl<Tab: DockingTab> DockingTree<Tab> {
         Some(())
     }
 
-    fn render(&mut self, ui: &mut UI) {
+    fn render(&mut self, ui: &mut UI, context: &mut Tab::Context) {
         let mut commands = Vec::new();
 
-        self.render_node(ui, self.root, &mut commands);
+        self.render_node(ui, self.root, &mut commands, context);
 
         for command in commands {
             self.execute_command(command);
@@ -213,9 +213,9 @@ impl<Tab: DockingTab> DockingTree<Tab> {
 
 impl<Tab: DockingTab> DockingState<Tab> {
 
-    pub fn render(&mut self, ui: &mut UI) {
+    pub fn render(&mut self, ui: &mut UI, context: &mut Tab::Context) {
         ui.with_node(UINodeParams::new(Size::fr(1.0), Size::fr(1.0)), |ui| {
-            self.tree.render(ui);
+            self.tree.render(ui, context);
         });
     }
 

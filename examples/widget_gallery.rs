@@ -155,6 +155,8 @@ enum GalleryTab {
 
 impl pierro::DockingTab for GalleryTab {
 
+    type Context = ();
+
     fn title(&self) -> String {
         match self {
             GalleryTab::Basic(..) => "Basic Widgets".to_owned(),
@@ -162,7 +164,7 @@ impl pierro::DockingTab for GalleryTab {
         }
     }
 
-    fn render(&mut self, ui: &mut pierro::UI) {
+    fn render(&mut self, ui: &mut pierro::UI, _context: &mut ()) {
             match self {
                 GalleryTab::Basic(basic) => basic.ui(ui),
                 GalleryTab::Layout(layout) => layout.ui(ui)
@@ -199,7 +201,7 @@ impl pierro::App for Gallery {
                 });
             });
         });
-        self.docking_state.render(ui);
+        self.docking_state.render(ui, &mut ());
     }
 
 }
