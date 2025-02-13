@@ -4,6 +4,8 @@
 
 # Pierro
 
+### Note: Pierro is currently work-in-progress. Expect breaking changes. Use at your own risk.
+
 Pierro is a simple immediate mode GUI library for Rust.
 
 ![An example of a pierro app](media/widget_gallery.png)

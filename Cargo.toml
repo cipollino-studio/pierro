@@ -1,7 +1,16 @@
 [package]
 name = "pierro"
+description = "An immediate mode UI library for Rust"
+homepage = "https://github.com/cipollino-studio/pierro"
+repository = "https://github.com/cipollino-studio/pierro"
+readme = "README.md"
+
+categories = ["gui"]
+keywords = ["ui", "immediate-mode"]
+
 version = "0.1.0"
 edition = "2021"
+license = "MIT"
 
 [dependencies]
 winit = "0.30.5"
