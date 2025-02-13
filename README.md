@@ -1,4 +1,5 @@
 
+### Moved to Cipollino monorepo: https://github.com/cipollino-studio/cipollino-studio
 
 ![Pierro Logo](media/banner.png)
 
